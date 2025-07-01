@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <h2>Notificações</h2>
+  {% if notifications %}
+    <a href="{% url 'notificacoes:mark_all_as_read' %}" class="btn btn-sm btn-outline-primary m-2">
+      Marcar todas como lidas
+    </a>
+    <div class="list-group">
+      {% for notification in notifications %}
+        <div class="list-group-item {% if not notification.is_read %}list-group-item-info{% endif %}">
+          <h5>{{ notification.title }}</h5>
+          <p>{{ notification.message }}</p>
+          <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+          <a href="{% url 'notificacoes:mark_as_read' notification.id %}" class="btn btn-sm btn-outline-primary float-end">
+            Marcar como lida
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Não há notificações.</p>
+  {% endif %}
+</div>
+{% endblock %}

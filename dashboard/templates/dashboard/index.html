@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Gestão de Anomalias{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-line me-2"></i>Dashboard</h1>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card" style="background-color:rgba(252, 126, 8, 0.65); color:rgb(255, 255, 255);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total de Salas</h6>
+                            <h2 class="display-4 mb-0">{{ total_salas }}</h2>
+                        </div>
+                        <i class="fas fa-door-open fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card" style="background-color:rgb(170, 104, 5); color:rgb(255, 255, 255);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total de Computadores</h6>
+                            <h2 class="display-4 mb-0">{{ total_computadores }}</h2>
+                        </div>
+                        <i class="fas fa-desktop fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card" style="background-color:rgb(255, 67, 67); color:rgb(255, 255, 255);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total de Anomalias</h6>
+                            <h2 class="display-4 mb-0">{{ total_anomalias }}</h2>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Anomalias por Estado -->
+        
+        <div class="col-md-6 mb-4">
+    <div class="card h-100">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-chart-pie me-2"></i>Anomalias por Estado
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive mb-4">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Estado</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estado in anomalias_por_estado %}
+                        <tr>
+                            <td>{{ estado.estado }}</td>
+                            <td class="text-end">{{ estado.total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Gráfico de Pizza -->
+            <div class="d-flex justify-content-center">
+                <div style="width: 100%; max-width: 300px;">
+                    <canvas id="graficoEstado"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script do Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctxEstado = document.getElementById('graficoEstado').getContext('2d');
+  new Chart(ctxEstado, {
+    type: 'pie',
+    data: {
+      labels: {{ dados_estado_labels|safe }},
+      datasets: [{
+        data: {{ dados_estado_valores|safe }},
+        backgroundColor: {{ dados_estado_cores|safe }}
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,  // mantém proporção ao redimensionar
+      plugins: {
+        legend: {
+          position: 'bottom'  // legenda abaixo do gráfico
+        }
+      }
+    }
+  });
+</script>
+        
+        
+        <!-- Anomalias Recentes -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Anomalias Recentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for anomalia in anomalias_recentes %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ anomalia.titulo }}</h6>
+                                <small class="text-muted">{{ anomalia.data_registo|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">{{ anomalia.computador }} - {{ anomalia.get_estado_display }}</p>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item">
+                            <p class="mb-0 text-muted">Nenhuma anomalia foi registada recentemente.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Salas Problemáticas -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>Salas com Mais Anomalias
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Sala</th>
+                                    <th class="text-end">Total de Anomalias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sala in salas_problematicas %}
+                                <tr>
+                                    <td>{{ sala.numero }}</td>
+                                    <td class="text-end">{{ sala.num_anomalias }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">Nenhuma sala com anomalias registadas.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Computadores Problemáticos -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-laptop-medical me-2"></i>Computadores com Mais Anomalias
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Computador</th>
+                                    <th>Sala</th>
+                                    <th class="text-end">Total de Anomalias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for computador in computadores_problematicos %}
+                                <tr>
+                                    <td>{{ computador.numero_identificacao }}</td>
+                                    <td>{{ computador.sala.numero }}</td>
+                                    <td class="text-end">{{ computador.num_anomalias }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">Nenhum computador com anomalias registadas.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

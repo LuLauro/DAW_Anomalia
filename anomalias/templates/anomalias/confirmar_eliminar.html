@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar Anomalia{% endblock %}
+
+{% block content %}
+<div class="alert alert-warning">
+    <h4>Tem certeza que deseja eliminar a anomalia?</h4>
+    <p><strong>{{ anomalia.titulo }}</strong> — registrada em {{ anomalia.data_registo|date:"d/m/Y H:i" }} — resolvida em {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

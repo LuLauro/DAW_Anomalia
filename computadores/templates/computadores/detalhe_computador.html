@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Computador {{ computador.numero_identificacao }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Computador {{ computador.numero_identificacao }}</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Sala:</strong> {{ computador.sala.numero }}</p>
+                <p><strong>Marca:</strong> {{ computador.marca }}</p>
+                <p><strong>Modelo:</strong> {{ computador.modelo }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Data de Aquisição:</strong> {{ computador.data_aquisicao|default:"Não informada" }}</p>
+                <p><strong>Observações:</strong><br>{{ computador.observacoes|default:"Sem observações"|linebreaks }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Anomalias</h3>
+        <a href="{% url 'anomalias:registar_anomalia' %}?computador={{ computador.pk }}" class="btn btn-primary">
+            Registar Anomalia
+        </a>
+    </div>
+    <div class="card-body">
+        {% if anomalias %}
+        <div class="list-group">
+            {% for anomalia in anomalias %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ anomalia.titulo }}</h5>
+                    <small>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</small>
+                </div>
+                <p class="mb-1">{{ anomalia.descricao|truncatewords:30 }}</p>
+                <small>Estado: {{ anomalia.get_estado_display }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center">Nenhuma anomalia registada para este computador.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

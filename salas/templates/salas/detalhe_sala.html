@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Sala {{ sala.numero }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Sala {{ sala.numero }}</h2>
+    </div>
+    <div class="card-body">
+        <p><strong>Descrição:</strong> {{ sala.descricao|default:"Sem descrição" }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Computadores</h3>
+        {% if user.is_staff %}
+        <a href="{% url 'computadores:registar_computador' %}?sala={{ sala.pk }}" class="btn btn-primary">
+            Adicionar Computador
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if computadores %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Identificação</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for computador in computadores %}
+                    <tr>
+                        <td>{{ computador.numero_identificacao }}</td>
+                        <td>{{ computador.marca }}</td>
+                        <td>{{ computador.modelo }}</td>
+                        <td>
+                            <a href="{% url 'computadores:detalhe_computador' computador.pk %}" 
+                               class="btn btn-sm btn-info">Detalhes</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center">Nenhum computador registado nesta sala.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
