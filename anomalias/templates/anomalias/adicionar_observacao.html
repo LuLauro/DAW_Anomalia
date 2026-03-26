@@ -44,6 +44,33 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="mb-0">Anexos</h3>
+    </div>
+    <div class="card-body">
+        {% if anexos %}
+            <div class="row g-3">
+                {% for anexo in anexos %}
+                    {% if anexo.tipo == "IMAGEM" %}
+                    <div class="col-md-4">
+                        <img src="{% url 'anomalias:ver_anexo' anexo.pk %}" alt="Imagem anexo" class="img-fluid rounded">
+                    </div>
+                    {% elif anexo.tipo == "VIDEO" %}
+                    <div class="col-md-6">
+                        <video controls class="w-100">
+                            <source src="{% url 'anomalias:ver_anexo' anexo.pk %}" type="video/mp4">
+                        </video>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mb-0">Sem anexos.</p>
+        {% endif %}
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="mb-0">Adicionar Observações</h3>        

@@ -2,8 +2,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from anomalias.models import Anomalia
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Notification
+
+User = get_user_model()
 
 @receiver(post_save, sender=Anomalia)
 def criar_notificacao_anomalia(sender, instance, created, **kwargs):

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatorio de Anomalias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .header p {
+            margin: 2px 0;
+        }
+        .summary {
+            margin-bottom: 20px;
+        }
+        .summary table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary td {
+            padding: 6px;
+            border: 1px solid #ddd;
+        }
+        table.list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.list th,
+        table.list td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: top;
+        }
+        table.list th {
+            background: #f2f2f2;
+        }
+        .muted {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ instituicao_nome }}</h1>
+        <p>Relatorio de anomalias</p>
+        <p class="muted">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
+        <p class="muted">Periodo: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="summary">
+        <table>
+            <tr>
+                <td><strong>Total de anomalias</strong><br>{{ total_anomalias }}</td>
+                <td><strong>Resolvidas</strong><br>{{ total_resolvidas }}</td>
+                <td><strong>Pendentes</strong><br>{{ total_pendentes }}</td>
+                <td><strong>Tempo medio de resolucao</strong><br>{{ tempo_medio_resolucao }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="list">
+        <thead>
+            <tr>
+                <th>Titulo</th>
+                <th>Estado</th>
+                <th>Sala</th>
+                <th>Computador</th>
+                {% if mostrar_reportado_por %}
+                <th>Reportado por</th>
+                {% endif %}
+                <th>Data registo</th>
+                <th>Data resolvida</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for anomalia in anomalias %}
+            <tr>
+                <td>{{ anomalia.titulo }}</td>
+                <td>{{ anomalia.get_estado_display }}</td>
+                <td>
+                    {% if anomalia.computador %}
+                        {{ anomalia.computador.sala.numero }}
+                    {% elif anomalia.sala %}
+                        {{ anomalia.sala.numero }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if anomalia.computador %}
+                        {{ anomalia.computador.numero_identificacao }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                {% if mostrar_reportado_por %}
+                <td>{{ anomalia.reportado_por.username }}</td>
+                {% endif %}
+                <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if anomalia.data_resolvida %}
+                        {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">Sem anomalias no periodo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

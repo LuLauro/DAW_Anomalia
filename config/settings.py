@@ -11,7 +11,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['95.94.41.243', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -26,6 +26,10 @@ INSTALLED_APPS = [
     'computadores',
     'anomalias',
     'notificacoes.apps.NotificacoesConfig',
+    'users',
+    'tecnico',
+    'relatorios',
+    'ai_agent',
 ]
 
 MIDDLEWARE = [
@@ -103,10 +107,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication settings
-LOGIN_URL = 'login'  # URL para onde redirecionar quando precisar de autenticação
-# URL para onde redirecionar após login bem-sucedido
-LOGIN_REDIRECT_URL = 'anomalias:lista_anomalias'
-LOGOUT_REDIRECT_URL = 'login'  # URL para onde redirecionar após logout
+LOGIN_URL = 'users:login'
+LOGOUT_REDIRECT_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'anomalias:lista_anomalias'  # ok
 LOGOUT_URL = 'logout'  # URL para processar o logout
 
 # Session settings

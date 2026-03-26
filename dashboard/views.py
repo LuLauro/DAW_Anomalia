@@ -24,7 +24,7 @@ def logout_view(request):
     
 @user_passes_test(is_admin)
 def dashboard(request):
-    # Estatísticas gerais
+    # Contagem de anomalias agrupadas por estado (PENDENTE, EM_RESOLUCAO, RESOLVIDO)
     total_salas = Sala.objects.count()
     total_computadores = Computador.objects.count()
     total_anomalias = Anomalia.objects.count()
@@ -33,7 +33,7 @@ def dashboard(request):
     anomalias_por_estado = Anomalia.objects.values(
         'estado').annotate(total=Count('id'))
 
-    # Anomalias recentes (últimos 7 dias)
+    # Filtra as anomalias registradas nos últimos 7 dias (recentes)
     data_limite = timezone.now() - timedelta(days=7)
     anomalias_recentes = Anomalia.objects.filter(
         data_registo__gte=data_limite
@@ -44,12 +44,12 @@ def dashboard(request):
         num_anomalias_computador=Count(
             'computadores__anomalias',
             filter=Q(computadores__anomalias__estado__in=['PENDENTE', 'EM_RESOLUCAO'], computadores__anomalias__ativo=True),
-            distinct=True  # <- MUITO IMPORTANTE
+            distinct=True  
         ),
         num_anomalias_diretas=Count(
             'anomalias',
             filter=Q(anomalias__estado__in=['PENDENTE', 'EM_RESOLUCAO'], anomalias__ativo=True),
-            distinct=True  # <- para garantir que não duplica por joins
+            distinct=True  # para garantir que não duplica por joins
         )
     ).annotate(
         num_anomalias=F('num_anomalias_computador') + F('num_anomalias_diretas')
@@ -70,7 +70,7 @@ def dashboard(request):
         estado: Anomalia.objects.filter(estado=estado).count()
         for estado in estados
     }
-    
+# Monta o contexto que será enviado para o template do dashboard
     context = {
         'total_salas': total_salas,
         'total_computadores': total_computadores,
@@ -88,6 +88,7 @@ def dashboard(request):
 
 @login_required
 def grafico_anomalias_estado(request):
+# Consulta agregada de contagem por estado
     dados = (
         Anomalia.objects
         .values('estado')
@@ -103,15 +104,16 @@ def grafico_anomalias_estado(request):
         'EM_RESOLUCAO': '#17a2b8',
         'RESOLVIDO': '#28a745',
     }
-
+# Prepara os dados para o gráfico
     for item in dados:
-        labels.append(dict(Anomalia.ESTADO_CHOICES)[item['estado']])
-        valores.append(item['total'])
+        labels.append(dict(Anomalia.ESTADO_CHOICES)[item['estado']])  # label amigável
+        valores.append(item['total']) # total de anomalias neste estado
         cores.append(CORES_ESTADOS.get(item['estado'], '#6c757d'))  # cor padrão cinza
 
+# Envia os dados para o template do gráfico
     context = {
-        'labels': labels,
-        'valores': valores,
+        'labels': labels, 
+        'valores': valores, 
         'cores': cores,
     }
     return render(request, 'anomalias/grafico_estado.html', context)

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Tecnico{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Dashboard Tecnico</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'tecnico:lista_anomalias' %}" class="btn btn-secondary">Ver todas</a>
+        <a href="{% url 'tecnico:historico_anomalias' %}" class="btn btn-outline-secondary">Historico</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pendentes</h5>
+                <p class="display-6 mb-0">{{ total_pendentes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body">
+                <h5 class="card-title">Em Resolucao</h5>
+                <p class="display-6 mb-0">{{ total_em_resolucao }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <h5 class="card-title">Resolvidas</h5>
+                <p class="display-6 mb-0">{{ total_resolvidas }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Anomalias recentes</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Titulo</th>
+                    <th>Estado</th>
+                    <th>Sala</th>
+                    <th>Computador</th>
+                    <th>Data</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anomalia in anomalias_recentes %}
+                <tr>
+                    <td>{{ anomalia.titulo }}</td>
+                    <td>{{ anomalia.get_estado_display }}</td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.sala.numero }}
+                        {% elif anomalia.sala %}
+                            {{ anomalia.sala.numero }}
+                        {% else %}
+                            <em>-</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.numero_identificacao }}
+                        {% else %}
+                            <em>-</em>
+                        {% endif %}
+                    </td>
+                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'tecnico:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-primary">
+                            Detalhe
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">Sem anomalias abertas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

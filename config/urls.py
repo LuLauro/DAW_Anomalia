@@ -1,15 +1,27 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
+from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Redirect root URL '/' to dashboard/
+    path('', lambda request: redirect('dashboard/')),
+
     path('dashboard/', include('dashboard.urls')),
-    path('', include('anomalias.urls')),
+    path('anomalias/', include('anomalias.urls')),
     path('salas/', include('salas.urls')),
     path('computadores/', include('computadores.urls')),
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('tecnico/', include('tecnico.urls')),
+    path('relatorios/', include('relatorios.urls')),
+    path('ai/', include('ai_agent.urls')),
+
+    # Users app handles login/logout/signup/password reset
+    path('users/', include(('users.urls', 'users'), namespace='users')),
     path('notificacoes/', include('notificacoes.urls', namespace='notificacoes')),
-    
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

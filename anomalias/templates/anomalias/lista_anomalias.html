@@ -114,6 +114,12 @@
                         Detalhes
                     </a>
                 </td>
+                {% else %}
+                <td>
+                    <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-info">
+                        Detalhe
+                    </a>
+                </td>
                 {% endif %}
 
                 <!-- Eliminar -->

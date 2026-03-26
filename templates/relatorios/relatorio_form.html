@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatorios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Relatorios em PDF</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Parametros do relatorio</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{% url 'relatorios:gerar_pdf' %}" class="row g-3">
+            <div class="col-md-6">
+                <label for="periodo" class="form-label">Periodo</label>
+                <select id="periodo" name="periodo" class="form-select">
+                    <option value="semana_atual">Semana atual</option>
+                    <option value="ultima_semana">Ultima semana</option>
+                    <option value="intervalo">Intervalo personalizado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="data_inicio" class="form-label">Data inicio</label>
+                <input type="date" id="data_inicio" name="data_inicio" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="data_fim" class="form-label">Data fim</label>
+                <input type="date" id="data_fim" name="data_fim" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+                <label for="sala" class="form-label">Sala</label>
+                <select id="sala" name="sala" class="form-select">
+                    <option value="">Todas</option>
+                    {% for sala in salas %}
+                    <option value="{{ sala.id }}">{{ sala.numero }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="estado" class="form-label">Estado</label>
+                <select id="estado" name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    {% for valor, rotulo in estado_choices %}
+                    <option value="{{ valor }}">{{ rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select id="tipo" name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for valor, rotulo in tipo_choices %}
+                    <option value="{{ valor }}">{{ rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Gerar PDF</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

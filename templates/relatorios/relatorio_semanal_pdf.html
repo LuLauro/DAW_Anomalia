@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatorio Semanal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .header p {
+            margin: 2px 0;
+        }
+        .summary {
+            margin-bottom: 16px;
+        }
+        .summary table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary td {
+            padding: 6px;
+            border: 1px solid #ddd;
+        }
+        .block {
+            margin-bottom: 16px;
+        }
+        table.list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.list th,
+        table.list td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: top;
+        }
+        table.list th {
+            background: #f2f2f2;
+        }
+        .muted {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ instituicao_nome }}</h1>
+        <p>Relatorio semanal de anomalias</p>
+        <p class="muted">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
+        <p class="muted">Periodo: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
+    </div>
+
+    {% include 'relatorios/partials/indicadores.html' %}
+
+    {% if is_admin or is_coordenador %}
+    <div class="block">
+        <table class="list" style="margin-bottom: 12px;">
+            <thead>
+                <tr>
+                    <th>Graficos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="data:image/png;base64,{{ grafico_estado_img }}" alt="Grafico estado" style="max-width: 300px; margin-right: 8px;">
+                        <img src="data:image/png;base64,{{ grafico_top_salas_img }}" alt="Grafico top salas" style="max-width: 320px; margin-right: 8px;">
+                        <img src="data:image/png;base64,{{ grafico_top_tipos_img }}" alt="Grafico top tipos" style="max-width: 320px;">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table class="list">
+            <thead>
+                <tr>
+                    <th>Resumo por estado</th>
+                    <th>Top salas</th>
+                    <th>Top tipos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        {% for item in por_estado %}
+                            {{ item.estado }}: {{ item.total }}<br>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for item in top_salas %}
+                            {% if item.sala__numero %}
+                                Sala {{ item.sala__numero }}
+                            {% elif item.computador__sala__numero %}
+                                Sala {{ item.computador__sala__numero }}
+                            {% else %}
+                                Sem sala
+                            {% endif %}
+                            : {{ item.total }}<br>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for item in top_tipos %}
+                            {{ item.tipo|default:"-" }}: {{ item.total }}<br>
+                        {% empty %}
+                            -
+                        {% endfor %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if is_tecnico %}
+    <div class="block">
+        <h3>Lista operacional (pendentes e em resolucao)</h3>
+        <table class="list">
+            <thead>
+                <tr>
+                    <th>Data registo</th>
+                    <th>Sala</th>
+                    <th>Computador</th>
+                    <th>Titulo</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anomalia in anomalias_pendentes %}
+                <tr>
+                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.sala.numero }}
+                        {% elif anomalia.sala %}
+                            {{ anomalia.sala.numero }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.numero_identificacao }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ anomalia.titulo }}</td>
+                    <td>{{ anomalia.get_estado_display }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Sem anomalias pendentes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="block">
+        {% if is_admin %}
+        <h3>Detalhe completo (Administrador)</h3>
+        {% elif is_coordenador %}
+        <h3>Detalhe agregado (Coordenador)</h3>
+        {% else %}
+        <h3>Detalhe tecnico</h3>
+        {% endif %}
+        <table class="list">
+            <thead>
+                <tr>
+                    <th>Data registo</th>
+                    <th>Sala</th>
+                    <th>Computador</th>
+                    <th>Titulo</th>
+                    <th>Estado</th>
+                    {% if is_admin %}
+                    <th>Reportado por</th>
+                    {% endif %}
+                    {% if is_tecnico %}
+                    <th>Observacoes</th>
+                    {% endif %}
+                    <th>Data resolvida</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anomalia in anomalias %}
+                <tr>
+                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.sala.numero }}
+                        {% elif anomalia.sala %}
+                            {{ anomalia.sala.numero }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.numero_identificacao }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ anomalia.titulo }}</td>
+                    <td>{{ anomalia.get_estado_display }}</td>
+                    {% if is_admin %}
+                    <td>{{ anomalia.reportado_por.get_full_name }} ({{ anomalia.reportado_por.email }})</td>
+                    {% endif %}
+                    {% if is_tecnico %}
+                    <td>{{ anomalia.observacoes|default:"-" }}</td>
+                    {% endif %}
+                    <td>
+                        {% if anomalia.data_resolvida %}
+                            {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">Sem anomalias no periodo.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

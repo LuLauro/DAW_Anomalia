@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Agente Técnico IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Agente Técnico IA</h2>
+            </div>
+            <div class="card-body">
+                <form id="ai-agent-form" class="mb-3">
+                    {% csrf_token %}
+                    <label for="pergunta" class="form-label">Pergunta</label>
+                    <input type="text" class="form-control" id="pergunta" name="pergunta" placeholder="Ex: Que anomalias devo resolver hoje?">
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">Perguntar</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-urgente">Mais urgente</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btn-resumo">Resumo</button>
+                    </div>
+                </form>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Resposta JSON</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre id="ai-agent-output" class="mb-0" style="white-space: pre-wrap;">{}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const form = document.getElementById('ai-agent-form');
+const output = document.getElementById('ai-agent-output');
+const perguntaInput = document.getElementById('pergunta');
+const btnUrgente = document.getElementById('btn-urgente');
+const btnResumo = document.getElementById('btn-resumo');
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+
+async function enviarPergunta(pergunta) {
+    output.textContent = '...';
+    const formData = new FormData();
+    formData.append('pergunta', pergunta);
+    const response = await fetch("{% url 'ai_agent:perguntar' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    });
+    const data = await response.json();
+    output.textContent = JSON.stringify(data, null, 2);
+}
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pergunta = perguntaInput.value.trim();
+    if (pergunta) {
+        enviarPergunta(pergunta);
+    }
+});
+
+btnUrgente.addEventListener('click', () => {
+    enviarPergunta('Qual é a anomalia mais urgente?');
+});
+
+btnResumo.addEventListener('click', () => {
+    enviarPergunta('Resumo do estado atual');
+});
+</script>
+{% endblock %}

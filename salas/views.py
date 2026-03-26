@@ -4,12 +4,10 @@ from django.contrib import messages
 from .models import Sala
 from .forms import SalaForm
 
-
 @login_required
 def lista_salas(request):
     salas = Sala.objects.all()
     return render(request, 'salas/lista_salas.html', {'salas': salas})
-
 
 @login_required
 def registar_sala(request):
@@ -23,11 +21,11 @@ def registar_sala(request):
         form = SalaForm()
     return render(request, 'salas/registar_sala.html', {'form': form})
 
-
 @login_required
 def detalhe_sala(request, pk):
     sala = get_object_or_404(Sala, pk=pk)
-    computadores = sala.computadores.all()
+    # uso getattr para evitar warning do Pylance
+    computadores = getattr(sala, 'computadores', Sala.objects.none()).all()
     return render(request, 'salas/detalhe_sala.html', {
         'sala': sala,
         'computadores': computadores

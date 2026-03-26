@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhe da Anomalia{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Detalhe da anomalia</h2>
+    <a href="{% url 'tecnico:lista_anomalias' %}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">{{ anomalia.titulo }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Estado:</strong> {{ anomalia.get_estado_display }}</p>
+                <p class="mb-2"><strong>Tipo:</strong> {{ anomalia.get_tipo_display|default:"-" }}</p>
+                <p class="mb-2"><strong>Data registo:</strong> {{ anomalia.data_registo|date:"d/m/Y H:i" }}</p>
+                <p class="mb-2"><strong>Reportado por:</strong> {{ anomalia.reportado_por.username }}</p>
+                {% if anomalia.data_resolvida %}
+                <p class="mb-2"><strong>Data resolvida:</strong> {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
+                {% endif %}
+                <p class="mb-0"><strong>Descricao:</strong><br>{{ anomalia.descricao }}</p>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Anexos</h5>
+            </div>
+            <div class="card-body">
+                {% if anexos %}
+                    <div class="row g-3">
+                        {% for anexo in anexos %}
+                            {% if anexo.tipo == "IMAGEM" %}
+                            <div class="col-md-4">
+                                <img src="{% url 'anomalias:ver_anexo' anexo.pk %}" alt="Imagem anexo" class="img-fluid rounded">
+                            </div>
+                            {% elif anexo.tipo == "VIDEO" %}
+                            <div class="col-md-6">
+                                <video controls class="w-100">
+                                    <source src="{% url 'anomalias:ver_anexo' anexo.pk %}" type="video/mp4">
+                                </video>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mb-0">Sem anexos.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Computador</h5>
+            </div>
+            <div class="card-body">
+                {% if anomalia.computador %}
+                    <p class="mb-1"><strong>ID:</strong> {{ anomalia.computador.numero_identificacao }}</p>
+                    <p class="mb-1"><strong>Marca:</strong> {{ anomalia.computador.marca }}</p>
+                    <p class="mb-1"><strong>Modelo:</strong> {{ anomalia.computador.modelo }}</p>
+                    <p class="mb-0"><strong>Sala:</strong> {{ anomalia.computador.sala.numero }}</p>
+                {% else %}
+                    <p class="mb-0">Sem computador associado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Sala</h5>
+            </div>
+            <div class="card-body">
+                {% if anomalia.sala %}
+                    <p class="mb-0"><strong>Numero:</strong> {{ anomalia.sala.numero }}</p>
+                {% elif anomalia.computador %}
+                    <p class="mb-0"><strong>Numero:</strong> {{ anomalia.computador.sala.numero }}</p>
+                {% else %}
+                    <p class="mb-0">Sem sala associada.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Atualizar estado</h5>
+            </div>
+            <div class="card-body">
+                {% if anomalia.estado == "PENDENTE" %}
+                <form method="post" action="{% url 'tecnico:atualizar_estado' anomalia.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="estado" value="EM_RESOLUCAO">
+                    <button type="submit" class="btn btn-warning w-100">Marcar em resolucao</button>
+                </form>
+                {% elif anomalia.estado == "EM_RESOLUCAO" %}
+                <form method="post" action="{% url 'tecnico:atualizar_estado' anomalia.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="estado" value="RESOLVIDO">
+                    <button type="submit" class="btn btn-success w-100">Marcar resolvido</button>
+                </form>
+                {% else %}
+                <div class="alert alert-secondary mb-0">Anomalia resolvida. Alteracoes bloqueadas.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Observacoes tecnicas</h5>
+            </div>
+            <div class="card-body">
+                {% if anomalia.observacoes %}
+                <div class="border rounded p-2 bg-light mb-3" style="white-space: pre-wrap;">
+                    {{ anomalia.observacoes }}
+                </div>
+                {% else %}
+                <p class="text-muted">Sem observacoes.</p>
+                {% endif %}
+
+                {% if anomalia.estado != "RESOLVIDO" %}
+                <form method="post" action="{% url 'tecnico:adicionar_observacao' anomalia.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="observacao" class="form-label">Nova observacao</label>
+                        <textarea class="form-control" id="observacao" name="observacao" rows="4" placeholder="Ex: Cabo HDMI substituido, Reinstalacao de drivers, Equipamento enviado para reparacao externa"></textarea>
+                        <div class="form-text">Registe intervencoes tecnicas de forma objetiva.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Adicionar observacao</button>
+                </form>
+                {% else %}
+                <div class="alert alert-secondary mb-0">Nao e possivel adicionar observacoes.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

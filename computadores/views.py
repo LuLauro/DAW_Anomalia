@@ -4,7 +4,6 @@ from django.contrib import messages
 from .models import Computador
 from .forms import ComputadorForm, FiltroComputadorForm
 
-
 @login_required
 def lista_computadores(request):
     form = FiltroComputadorForm(request.GET or None)
@@ -36,11 +35,11 @@ def registar_computador(request):
         form = ComputadorForm(initial=initial_data)
     return render(request, 'computadores/registar_computador.html', {'form': form})
 
-
 @login_required
 def detalhe_computador(request, pk):
     computador = get_object_or_404(Computador, pk=pk)
-    anomalias = computador.anomalias.all()
+    # uso getattr para evitar warning do Pylance
+    anomalias = getattr(computador, 'anomalias', Computador.objects.none()).all()
     return render(request, 'computadores/detalhe_computador.html', {
         'computador': computador,
         'anomalias': anomalias

@@ -1,0 +1,49 @@
+<div style="margin-bottom: 16px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px; width: 25%;">
+                <strong>Total de anomalias</strong><br>
+                <span style="font-size: 18px;">{{ total_anomalias }}</span>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 8px; width: 25%;">
+                <strong>Resolvidas</strong><br>
+                <span style="font-size: 18px; color: #2e7d32;">{{ total_resolvidas }}</span>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 8px; width: 25%;">
+                <strong>Pendentes</strong><br>
+                <span style="font-size: 18px; color: #f9a825;">{{ total_pendentes }}</span>
+            </td>
+            <td style="border: 1px solid #ddd; padding: 8px; width: 25%;">
+                <strong>Tempo medio resolucao</strong><br>
+                <span style="font-size: 18px;">{{ tempo_medio_resolucao }}</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div style="margin-bottom: 16px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <th style="text-align: left; padding: 6px; border: 1px solid #ddd;">Resolvidas vs Pendentes</th>
+            <th style="text-align: right; padding: 6px; border: 1px solid #ddd;">Percentagem</th>
+        </tr>
+        <tr>
+            <td style="padding: 6px; border: 1px solid #ddd;">
+                <div style="background: #e8f5e9; border: 1px solid #c8e6c9; height: 14px; width: 100%;">
+                    <div style="background: #2e7d32; height: 14px; width: {{ percent_resolvidas }}%;"></div>
+                </div>
+                <div style="font-size: 11px; color: #2e7d32;">Resolvidas</div>
+            </td>
+            <td style="text-align: right; padding: 6px; border: 1px solid #ddd;">{{ percent_resolvidas }}%</td>
+        </tr>
+        <tr>
+            <td style="padding: 6px; border: 1px solid #ddd;">
+                <div style="background: #fff8e1; border: 1px solid #ffe0b2; height: 14px; width: 100%;">
+                    <div style="background: #f9a825; height: 14px; width: {{ percent_pendentes }}%;"></div>
+                </div>
+                <div style="font-size: 11px; color: #f9a825;">Pendentes</div>
+            </td>
+            <td style="text-align: right; padding: 6px; border: 1px solid #ddd;">{{ percent_pendentes }}%</td>
+        </tr>
+    </table>
+</div>

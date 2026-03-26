@@ -1,0 +1,169 @@
+# 📊 Sistema de Registo de Anomalias em Salas de Computadores
+
+## 📌 Descrição
+
+Este projeto consiste num sistema web desenvolvido com **Django**, cujo objetivo é permitir o registo, acompanhamento e gestão de anomalias em salas de computadores.
+
+A aplicação foi pensada para ambientes escolares ou institucionais, facilitando a comunicação entre professores, coordenação e equipa técnica.
+
+---
+
+## 🎯 Funcionalidades Principais
+
+* ✅ Registo de anomalias por sala ou computador
+* 📎 Upload de anexos (imagem e vídeo)
+* 🔄 Gestão de estados das anomalias (pendente, em análise, resolvida, etc.)
+* 👥 Sistema de utilizadores com diferentes perfis:
+
+  * Professor
+  * Coordenador
+  * Técnico
+  * Administrador
+* 🔔 Sistema de notificações
+* 📊 Dashboard com estatísticas
+* 📄 Geração de relatórios em PDF
+* 🤖 Integração com agente de IA para apoio técnico
+
+---
+
+## 🧱 Tecnologias Utilizadas
+
+* Python
+* Django
+* SQLite (base de dados)
+* HTML / CSS / JavaScript
+* Matplotlib (gráficos)
+* XHTML2PDF (relatórios)
+
+---
+
+## ⚙️ Instalação
+
+### 1. Clonar o repositório
+
+```bash
+git clone <url-do-repositorio>
+cd Anomalias
+```
+
+### 2. Criar ambiente virtual
+
+```bash
+python -m venv venv
+```
+
+Ativar o ambiente:
+
+* Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+* Linux/Mac:
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+### 3. Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Configurar variáveis de ambiente
+
+Criar um ficheiro `.env` na raiz do projeto:
+
+```env
+SECRET_KEY=sua_chave_secreta
+DEBUG=True
+```
+
+---
+
+### 5. Aplicar migrações
+
+```bash
+python manage.py migrate
+```
+
+---
+
+### 6. Criar superutilizador
+
+```bash
+python manage.py createsuperuser
+```
+
+---
+
+### 7. Executar o servidor
+
+```bash
+python manage.py runserver
+```
+
+Aceder no browser:
+
+```
+http://127.0.0.1:8000/
+```
+
+---
+
+## 👤 Perfis de Utilizador
+
+O sistema possui diferentes níveis de acesso:
+
+* **Professor** → regista anomalias
+* **Coordenador** → acompanha e gere
+* **Técnico** → resolve e atualiza estados
+* **Administrador** → controlo total do sistema
+
+---
+
+## 📂 Estrutura do Projeto
+
+O projeto está organizado por módulos (apps Django):
+
+* `anomalias` → gestão de anomalias
+* `salas` → gestão de salas
+* `computadores` → gestão de equipamentos
+* `users` → autenticação e perfis
+* `dashboard` → estatísticas e visão geral
+* `notificacoes` → sistema de alertas
+* `tecnico` → área técnica
+* `relatorios` → geração de relatórios
+* `ai_agent` → módulo de apoio inteligente
+
+---
+
+## 🧪 Testes
+
+Para executar testes:
+
+```bash
+python manage.py test
+```
+
+---
+
+## 🚀 Melhorias Futuras
+
+* Integração com email para notificações
+* API REST
+* Melhorias no agente de IA
+* Interface mais responsiva
+* Deploy em ambiente de produção
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins académicos.
