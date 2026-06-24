@@ -8,10 +8,7 @@ from computadores.models import Computador
 from anomalias.models import Anomalia
 from django.contrib.auth import logout
 from django.contrib import messages
-
-def is_admin(user):
-    return user.is_authenticated and user.is_staff
-
+from users.permissions import is_admin
 
 def logout_view(request):
     if request.method == 'POST':
@@ -55,7 +52,6 @@ def dashboard(request):
         num_anomalias=F('num_anomalias_computador') + F('num_anomalias_diretas')
     ).filter(num_anomalias__gt=0).order_by('-num_anomalias')[:5]
     
-   
     # Computadores com mais anomalias
     computadores_problematicos = Computador.objects.annotate(
         num_anomalias=Count(
@@ -112,8 +108,8 @@ def grafico_anomalias_estado(request):
 
 # Envia os dados para o template do gráfico
     context = {
-        'labels': labels, 
-        'valores': valores, 
+        'labels': labels,
+        'valores': valores,
         'cores': cores,
     }
     return render(request, 'anomalias/grafico_estado.html', context)

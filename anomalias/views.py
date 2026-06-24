@@ -7,6 +7,12 @@ from .forms import AnomaliaForm, AnomaliaGeralForm, AnomaliaFilterForm, Observac
 from django.utils.timezone import now
 from .utils import enviar_email_grupos
 from django.contrib.auth.models import Group
+from users.permissions import (
+    can_add_observacao,
+    can_change_estado,
+    can_delete_anomalia,
+    can_view_anomalia,
+)
 
 @login_required
 def lista_anomalias(request):
@@ -86,26 +92,23 @@ Alterado por: {request.user.get_full_name()} ({request.user.email})
 @login_required
 def adicionar_observacao(request, pk):
     anomalia = get_object_or_404(Anomalia, pk=pk)
-    if request.user.groups.filter(name='Professor').exists():
-        messages.warning(request, "Você não pode adicionar observações.")
-        return redirect('anomalias:lista_anomalias')
 
-    anexos = anomalia.anexos.all().order_by('-data_upload')
+    if not can_add_observacao(request.user, anomalia):
+        messages.warning(request, "Você não tem permissão para adicionar observações.")
+        return redirect("anomalias:lista_anomalias")
 
-    if request.method == 'POST':
-        form = ObservacaoForm(request.POST, instance=anomalia)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Observação adicionada com sucesso.')
-            return redirect('anomalias:lista_anomalias')
-    else:
-        form = ObservacaoForm(instance=anomalia)
+    if request.method == "POST":
+        texto = request.POST.get("texto", "").strip()
 
-    return render(
-        request,
-        'anomalias/adicionar_observacao.html',
-        {'form': form, 'anomalia': anomalia, 'anexos': anexos},
-    )
+        if texto:
+            Observacao.objects.create(
+                anomalia=anomalia,
+                autor=request.user,
+                texto=texto,
+            )
+            messages.success(request, "Observação adicionada com sucesso.")
+
+    return redirect("anomalias:detalhe_anomalia", pk=anomalia.pk)
 
 
 def _criar_anexos(anomalia, imagens, videos):
@@ -121,13 +124,20 @@ def _criar_anexos(anomalia, imagens, videos):
 
 @login_required
 def detalhe_anomalia(request, pk):
-    anomalia = get_object_or_404(Anomalia.objects.select_related('computador', 'sala'), pk=pk)
-    if request.user.groups.filter(name='Professor').exists() and anomalia.reportado_por != request.user:
-        messages.warning(request, "VocÃª sÃ³ pode ver as suas anomalias.")
-        return redirect('anomalias:lista_anomalias')
-    anexos = anomalia.anexos.all().order_by('-data_upload')
-    return render(request, 'anomalias/detalhe_anomalia.html', {'anomalia': anomalia, 'anexos': anexos})
+    anomalia = get_object_or_404(Anomalia, pk=pk)
 
+    if not can_view_anomalia(request.user, anomalia):
+        messages.warning(request, "Você não tem permissão para ver esta anomalia.")
+        return redirect("anomalias:lista_anomalias")
+
+    anexos = anomalia.anexos.all().order_by("-data_upload")
+
+    return render(
+        request,
+        "tecnico/detalhe_anomalia.html",
+        {"anomalia": anomalia, "anexos": anexos},
+    )
+    
 @login_required
 def ver_anexo(request, pk):
     anexo = get_object_or_404(AnexoAnomalia, pk=pk)

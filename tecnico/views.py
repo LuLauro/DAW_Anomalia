@@ -1,24 +1,20 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models.functions import Coalesce
-
+from django.contrib.auth.decorators import login_required
+from users.permissions import group_required, is_tecnico
 from anomalias.models import Anomalia
-from users.utils import is_tecnico
-
-
-def _require_tecnico(request):
-    if not is_tecnico(request.user):
-        messages.error(request, "Acesso restrito ao grupo Tecnico.")
-        return False
-    return True
+from users.permissions import (can_add_observacao, can_change_estado, can_delete_anomalia, can_view_anomalia)
 
 
 @login_required
-def dashboard(request):
-    if not _require_tecnico(request):
-        return redirect("anomalias:lista_anomalias")
+@group_required(
+    is_tecnico,
+    error_message="Acesso restrito ao grupo Técnico.",
+    redirect_to="anomalias:lista_anomalias",
+)
 
+def dashboard(request):
     anomalias_abertas = (
         Anomalia.objects.filter(ativo=True, estado__in=["PENDENTE", "EM_RESOLUCAO"])
         .select_related("computador", "sala")
