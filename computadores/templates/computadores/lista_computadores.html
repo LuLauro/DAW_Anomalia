@@ -3,16 +3,23 @@
 {% block title %}Lista de Computadores{% endblock %}
 
 {% block content %}
-{% if user.is_staff %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Computadores</h2>
-    <a href="{% url 'computadores:registar_computador' %}" class="btn btn-primary">Novo Computador</a>
+<div class="page-header">
+    <div>
+        <h2>Computadores</h2>
+        <p>Consulte os equipamentos, filtre resultados e aceda ao detalhe técnico.</p>
+    </div>
+    {% if user.is_staff %}
+    <div class="page-actions">
+        <a href="{% url 'computadores:registar_computador' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Novo Computador
+        </a>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
 
-<div class="card mb-4">
+<div class="card form-card">
     <div class="card-header">
-        <h5 class="mb-0">Filtros</h5>
+        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
     </div>
     <div class="card-body">
         <form method="get" class="row g-3">
@@ -22,7 +29,7 @@
                 {{ field }}
             </div>
             {% endfor %}
-            <div class="col-12">
+            <div class="col-12 form-row-actions">
                 <button type="submit" class="btn btn-secondary">Filtrar</button>
                 <a href="{% url 'computadores:lista_computadores' %}" class="btn btn-outline-secondary">Limpar</a>
             </div>
@@ -30,36 +37,38 @@
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Identificação</th>
-                <th>Sala</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Data Aquisição</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for computador in computadores %}
-            <tr>
-                <td>{{ computador.numero_identificacao }}</td>
-                <td>{{ computador.sala.numero }}</td>
-                <td>{{ computador.marca }}</td>
-                <td>{{ computador.modelo }}</td>
-                <td>{{ computador.data_aquisicao|default:"-" }}</td>
-                <td>
-                    <a href="{% url 'computadores:detalhe_computador' computador.pk %}" class="btn btn-sm btn-info">Detalhes</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">Nenhum computador registado.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Identificação</th>
+                    <th>Sala</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Data Aquisição</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for computador in computadores %}
+                <tr>
+                    <td>{{ computador.numero_identificacao }}</td>
+                    <td>{{ computador.sala.numero }}</td>
+                    <td>{{ computador.marca }}</td>
+                    <td>{{ computador.modelo }}</td>
+                    <td>{{ computador.data_aquisicao|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'computadores:detalhe_computador' computador.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">Nenhum computador registado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

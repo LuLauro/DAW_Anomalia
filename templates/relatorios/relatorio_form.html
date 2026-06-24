@@ -1,35 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Relatorios{% endblock %}
+{% block title %}Relatórios{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Relatorios em PDF</h2>
+<div class="page-header">
+    <div>
+        <h2>Relatórios em PDF</h2>
+        <p>Configure filtros e exporte relatórios com o mesmo comportamento atual.</p>
+    </div>
 </div>
 
-<div class="card">
+<div class="card form-card">
     <div class="card-header">
-        <h5 class="mb-0">Parametros do relatorio</h5>
+        <h5 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Parâmetros do relatório</h5>
     </div>
     <div class="card-body">
         <form method="get" action="{% url 'relatorios:gerar_pdf' %}" class="row g-3">
             <div class="col-md-6">
-                <label for="periodo" class="form-label">Periodo</label>
+                <label for="periodo" class="form-label">Período</label>
                 <select id="periodo" name="periodo" class="form-select">
                     <option value="semana_atual">Semana atual</option>
-                    <option value="ultima_semana">Ultima semana</option>
+                    <option value="ultima_semana">Última semana</option>
                     <option value="intervalo">Intervalo personalizado</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="data_inicio" class="form-label">Data inicio</label>
+                <label for="data_inicio" class="form-label">Data início</label>
                 <input type="date" id="data_inicio" name="data_inicio" class="form-control">
             </div>
             <div class="col-md-3">
                 <label for="data_fim" class="form-label">Data fim</label>
                 <input type="date" id="data_fim" name="data_fim" class="form-control">
             </div>
-
             <div class="col-md-4">
                 <label for="sala" class="form-label">Sala</label>
                 <select id="sala" name="sala" class="form-select">
@@ -57,9 +59,10 @@
                     {% endfor %}
                 </select>
             </div>
-
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">Gerar PDF</button>
+            <div class="col-12 form-row-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-arrow-down me-2"></i>Gerar PDF
+                </button>
             </div>
         </form>
     </div>

@@ -3,31 +3,36 @@
 {% block title %}Agente Técnico IA{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8 offset-lg-2">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="mb-0">Agente Técnico IA</h2>
-            </div>
-            <div class="card-body">
-                <form id="ai-agent-form" class="mb-3">
-                    {% csrf_token %}
-                    <label for="pergunta" class="form-label">Pergunta</label>
-                    <input type="text" class="form-control" id="pergunta" name="pergunta" placeholder="Ex: Que anomalias devo resolver hoje?">
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">Perguntar</button>
-                        <button type="button" class="btn btn-outline-secondary" id="btn-urgente">Mais urgente</button>
-                        <button type="button" class="btn btn-outline-secondary" id="btn-resumo">Resumo</button>
-                    </div>
-                </form>
+<div class="page-header">
+    <div>
+        <h2>Agente Técnico IA</h2>
+        <p>Ferramenta de apoio técnico com a mesma lógica atual, numa interface consistente com o painel.</p>
+    </div>
+</div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Resposta JSON</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre id="ai-agent-output" class="mb-0" style="white-space: pre-wrap;">{}</pre>
-                    </div>
+<div class="form-shell">
+    <div class="card form-card">
+        <div class="card-header">
+            <h5 class="mb-0">Perguntar ao agente</h5>
+        </div>
+        <div class="card-body">
+            <form id="ai-agent-form" class="mb-4">
+                {% csrf_token %}
+                <label for="pergunta" class="form-label">Pergunta</label>
+                <input type="text" class="form-control" id="pergunta" name="pergunta" placeholder="Ex: Que anomalias devo resolver hoje?">
+                <div class="form-row-actions mt-3">
+                    <button type="submit" class="btn btn-primary">Perguntar</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-urgente">Mais urgente</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-resumo">Resumo</button>
+                </div>
+            </form>
+
+            <div class="card mb-0">
+                <div class="card-header">
+                    <h5 class="mb-0">Resposta JSON</h5>
+                </div>
+                <div class="card-body">
+                    <pre id="ai-agent-output" class="preformatted-output">{}</pre>
                 </div>
             </div>
         </div>

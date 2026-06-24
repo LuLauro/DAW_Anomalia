@@ -1,52 +1,58 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard Tecnico{% endblock %}
+{% block title %}Dashboard Técnico{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Dashboard Tecnico</h2>
-    <div class="d-flex gap-2">
+<div class="page-header">
+    <div>
+        <h2>Dashboard Técnico</h2>
+        <p>Resumo de trabalho técnico com acesso rápido às ocorrências mais recentes.</p>
+    </div>
+    <div class="page-actions">
         <a href="{% url 'tecnico:lista_anomalias' %}" class="btn btn-secondary">Ver todas</a>
-        <a href="{% url 'tecnico:historico_anomalias' %}" class="btn btn-outline-secondary">Historico</a>
+        <a href="{% url 'tecnico:historico_anomalias' %}" class="btn btn-outline-secondary">Histórico</a>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card border-warning">
-            <div class="card-body">
-                <h5 class="card-title">Pendentes</h5>
-                <p class="display-6 mb-0">{{ total_pendentes }}</p>
+<div class="metric-grid">
+    <article class="metric-card">
+        <div class="metric-top">
+            <div>
+                <p class="metric-label">Pendentes</p>
+                <h2 class="metric-value">{{ total_pendentes }}</h2>
             </div>
+            <span class="metric-icon"><i class="fas fa-hourglass-half"></i></span>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-info">
-            <div class="card-body">
-                <h5 class="card-title">Em Resolucao</h5>
-                <p class="display-6 mb-0">{{ total_em_resolucao }}</p>
+    </article>
+    <article class="metric-card">
+        <div class="metric-top">
+            <div>
+                <p class="metric-label">Em Resolução</p>
+                <h2 class="metric-value">{{ total_em_resolucao }}</h2>
             </div>
+            <span class="metric-icon"><i class="fas fa-screwdriver-wrench"></i></span>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-success">
-            <div class="card-body">
-                <h5 class="card-title">Resolvidas</h5>
-                <p class="display-6 mb-0">{{ total_resolvidas }}</p>
+    </article>
+    <article class="metric-card">
+        <div class="metric-top">
+            <div>
+                <p class="metric-label">Resolvidas</p>
+                <h2 class="metric-value">{{ total_resolvidas }}</h2>
             </div>
+            <span class="metric-icon"><i class="fas fa-circle-check"></i></span>
         </div>
-    </div>
+    </article>
 </div>
 
-<div class="card">
+<div class="table-card">
     <div class="card-header">
         <h5 class="mb-0">Anomalias recentes</h5>
     </div>
     <div class="table-responsive">
-        <table class="table mb-0">
+        <table class="table">
             <thead>
                 <tr>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>Estado</th>
                     <th>Sala</th>
                     <th>Computador</th>
@@ -77,9 +83,7 @@
                     </td>
                     <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
                     <td class="text-end">
-                        <a href="{% url 'tecnico:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-primary">
-                            Detalhe
-                        </a>
+                        <a href="{% url 'tecnico:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhe</a>
                     </td>
                 </tr>
                 {% empty %}

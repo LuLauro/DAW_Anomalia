@@ -1,180 +1,180 @@
 <!DOCTYPE html>
+{% load static notification_tags %}
 <html lang="pt">
-    {% load notification_tags %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gestão de Anomalias{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Estilos personalizados */
-        .navbar {
-            margin-bottom: 20px;
-        }
-        .nav-link {
-            padding: 0.5rem 1rem;
-            white-space: nowrap;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .alert {
-            margin-top: 20px;
-        }
-        .navbar-nav {
-            flex-wrap: nowrap;
-            gap: 0.25rem;
-        }
-        .navbar-nav .nav-item {
-            display: flex;
-        }
-        @media (max-width: 1200px) {
-            .nav-link {
-                padding: 0.4rem 0.7rem;
-                font-size: 0.92rem;
-            }
-        }
-        @media (max-width: 992px) {
-            .nav-link {
-                padding: 0.35rem 0.6rem;
-                font-size: 0.85rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'admin/css/app.css' %}">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'anomalias:lista_anomalias' %}">
-                <i class="fas fa-tools me-2"></i>Gestão de Anomalias
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            {% if user.is_authenticated %}
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'dashboard:index' %}">
-                            <i class="fas fa-chart-line me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'anomalias:lista_anomalias' %}">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Anomalias
-                        </a>
-                    </li>
-                    {% if user|has_group:"Tecnico" %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'tecnico:dashboard' %}">
-                            <i class="fas fa-screwdriver-wrench me-2"></i>Tecnico
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'salas:lista_salas' %}">
-                            <i class="fas fa-door-open me-2"></i>Salas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'computadores:lista_computadores' %}">
-                            <i class="fas fa-desktop me-2"></i>Computadores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'anomalias:historico_anomalias' %}">
-                            <i class="fas fa-history me-2"></i></i>Histórico
-                        </a>
-                    </li>                    
-                                        
-                    {% if user.is_staff or user|has_group:"Coordenador" %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'notificacoes:list' %}">
-                            <i class="fas fa-bell me-2"></i> Notificações
-                            {% get_unread_notifications_count request.user as count %}
-                            {% if count > 0 %}
-                            <span class="badge bg-danger">{{ count }}</span>
-                            {% endif %}
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if user|has_group:"Administrador" or user|has_group:"Coordenador" or user|has_group:"Tecnico" %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'relatorios:form' %}">
-                            <i class="fas fa-file-pdf me-2"></i>Relatorios
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if user|has_group:"Tecnico" %}
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="{% url 'ai_agent:ui' %}">
-                            <i class="fas fa-robot me-2"></i>Agente IA
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user me-1"></i>{{ user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            {% if user.is_staff %}
-                            <li>
-                                <a class="dropdown-item" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-cog me-1"></i>Admin Django
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li>
-                                <form method="post" action="{% url 'users:logout' %}" style="display: inline;">
-                                    {% csrf_token %}
-                                        <button class="dropdown-item" type="submit" style="background: none; border: none; padding: 0;">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Logout
-                                        </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-            {% endif %}
-        </div>
-    </nav>
+<body class="{% if user.is_authenticated %}dashboard-body{% else %}auth-body{% endif %}">
+    {% if user.is_authenticated %}
+        {% get_unread_notifications_count request.user as count %}
 
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <aside class="app-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="appSidebar" aria-labelledby="appSidebarLabel">
+            <div class="sidebar-panel">
+                <div class="sidebar-top">
+                    <a href="{% url 'anomalias:lista_anomalias' %}" class="sidebar-brand">
+                        <span class="sidebar-brand-mark"><i class="fas fa-tools"></i></span>
+                        <span class="sidebar-brand-copy">
+                            <strong>Gestão de Anomalias</strong>
+                            <small>Painel operacional</small>
+                        </span>
+                    </a>
+                    <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Fechar"></button>
                 </div>
-            {% endfor %}
-        {% endif %}
 
-        {% block content %}
-        {% endblock %}
-    </div>
+                <nav class="sidebar-nav">
+                    {% if user.is_staff %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard:index' %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    {% endif %}
 
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container text-center">
-            <span class="text-muted">© {% now "Y" %} Gestão de Anomalias. Todos os direitos reservados.</span>
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'anomalias' and request.resolver_match.url_name != 'historico_anomalias' %}is-active{% endif %}" href="{% url 'anomalias:lista_anomalias' %}">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>Anomalias</span>
+                    </a>
+
+                    {% if user|has_group:"Tecnico" %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'tecnico' %}is-active{% endif %}" href="{% url 'tecnico:dashboard' %}">
+                        <i class="fas fa-screwdriver-wrench"></i>
+                        <span>Técnico</span>
+                    </a>
+                    {% endif %}
+
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'salas' %}is-active{% endif %}" href="{% url 'salas:lista_salas' %}">
+                        <i class="fas fa-door-open"></i>
+                        <span>Salas</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'computadores' %}is-active{% endif %}" href="{% url 'computadores:lista_computadores' %}">
+                        <i class="fas fa-desktop"></i>
+                        <span>Computadores</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'anomalias' and request.resolver_match.url_name == 'historico_anomalias' %}is-active{% endif %}" href="{% url 'anomalias:historico_anomalias' %}">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        <span>Histórico</span>
+                    </a>
+
+                    {% if user.is_staff or user|has_group:"Coordenador" %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'notificacoes' %}is-active{% endif %}" href="{% url 'notificacoes:list' %}">
+                        <i class="fas fa-bell"></i>
+                        <span>Notificações</span>
+                        {% if count > 0 %}
+                        <span class="sidebar-pill">{{ count }}</span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+
+                    {% if user|has_group:"Administrador" or user|has_group:"Coordenador" or user|has_group:"Tecnico" %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'relatorios' %}is-active{% endif %}" href="{% url 'relatorios:form' %}">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Relatórios</span>
+                    </a>
+                    {% endif %}
+
+                    {% if user|has_group:"Tecnico" %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'ai_agent' %}is-active{% endif %}" href="{% url 'ai_agent:ui' %}">
+                        <i class="fas fa-robot"></i>
+                        <span>Agente IA</span>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </aside>
+
+        <div class="app-main">
+            <header class="app-header">
+                <div class="header-actions">
+                    <button class="header-toggle d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Abrir navegação">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <div class="header-right">
+                        {% if user.is_staff or user|has_group:"Coordenador" %}
+                        <a href="{% url 'notificacoes:list' %}" class="header-icon-btn" aria-label="Notificações">
+                            <i class="fas fa-bell"></i>
+                            {% if count > 0 %}
+                            <span class="header-badge">{{ count }}</span>
+                            {% endif %}
+                        </a>
+                        {% endif %}
+
+                        <div class="dropdown">
+                            <button class="header-user dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="header-user-avatar"><i class="fas fa-user"></i></span>
+                                <span class="header-user-name">{{ user.username }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end app-dropdown">
+                                {% if user.is_staff %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">
+                                        <i class="fas fa-gear me-2"></i>Admin Django
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li class="px-2">
+                                    <form method="post" action="{% url 'users:logout' %}">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item" type="submit">
+                                            <i class="fas fa-right-from-bracket me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <form method="post" action="{% url 'users:logout' %}" class="header-logout d-none d-sm-block">
+                            {% csrf_token %}
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fas fa-right-from-bracket me-2"></i>Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <main class="app-content">
+                {% if messages %}
+                <div class="message-stack">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+    {% else %}
+            <main class="auth-main">
+                {% if messages %}
+                <div class="container auth-messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+    {% endif %}
+
+                {% block content %}{% endblock %}
+
+    {% if user.is_authenticated %}
+            </main>
         </div>
-    </footer>
+    {% else %}
+            </main>
+    {% endif %}
 
-    <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Scripts adicionais específicos de cada página -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

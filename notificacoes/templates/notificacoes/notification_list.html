@@ -1,25 +1,50 @@
 {% extends 'base.html' %}
+
+{% block title %}Notificações{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h2>Notificações</h2>
-  {% if notifications %}
-    <a href="{% url 'notificacoes:mark_all_as_read' %}" class="btn btn-sm btn-outline-primary m-2">
-      Marcar todas como lidas
-    </a>
-    <div class="list-group">
-      {% for notification in notifications %}
-        <div class="list-group-item {% if not notification.is_read %}list-group-item-info{% endif %}">
-          <h5>{{ notification.title }}</h5>
-          <p>{{ notification.message }}</p>
-          <small class="text-muted">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
-          <a href="{% url 'notificacoes:mark_as_read' notification.id %}" class="btn btn-sm btn-outline-primary float-end">
-            Marcar como lida
-          </a>
-        </div>
-      {% endfor %}
+<div class="page-header">
+    <div>
+        <h2>Notificações</h2>
+        <p>Alertas recentes do sistema com leitura individual ou em lote.</p>
     </div>
-  {% else %}
-    <p>Não há notificações.</p>
-  {% endif %}
+    {% if notifications %}
+    <div class="page-actions">
+        <a href="{% url 'notificacoes:mark_all_as_read' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-check-double me-2"></i>Marcar todas como lidas
+        </a>
+    </div>
+    {% endif %}
 </div>
+
+{% if notifications %}
+    {% for notification in notifications %}
+    <article class="notification-card {% if not notification.is_read %}is-unread{% endif %}">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h5 class="mb-2">{{ notification.title }}</h5>
+                <p class="mb-2">{{ notification.message }}</p>
+                <div class="notification-meta">
+                    <i class="fas fa-clock me-2"></i>{{ notification.created_at|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+            {% if not notification.is_read %}
+            <span class="badge-soft">Nova</span>
+            {% endif %}
+        </div>
+        <div class="notification-footer">
+            <a href="{% url 'notificacoes:mark_as_read' notification.id %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-check me-2"></i>Marcar como lida
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-bell-slash fa-2x mb-3"></i>
+        <p class="mb-0">Não há notificações.</p>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

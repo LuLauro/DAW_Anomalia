@@ -1,15 +1,24 @@
 {% extends 'base.html' %}
+
 {% block title %}Eliminar Anomalia{% endblock %}
 
 {% block content %}
-<div class="alert alert-warning">
-    <h4>Tem certeza que deseja eliminar a anomalia?</h4>
-    <p><strong>{{ anomalia.titulo }}</strong> — registrada em {{ anomalia.data_registo|date:"d/m/Y H:i" }} — resolvida em {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
-
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-        <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-secondary">Cancelar</a>
-    </form>
+<div class="form-shell">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Eliminar Anomalia</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4 class="mb-3">Tem certeza que deseja eliminar a anomalia?</h4>
+                <p class="mb-0"><strong>{{ anomalia.titulo }}</strong> — registada em {{ anomalia.data_registo|date:"d/m/Y H:i" }} — resolvida em {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
+            </div>
+            <form method="post" class="form-row-actions mt-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -3,53 +3,59 @@
 {% block title %}Anomalia: {{ anomalia.titulo }}{% endblock %}
 
 {% block content %}
-<div class="card mb-4">
-    <div class="card-header">
-        <h2 class="mb-0">Anomalia: {{ anomalia.titulo }}</h2>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong>Título:</strong> {{ anomalia.titulo }}</p>
-                <p><strong>Sala:</strong>
-                    {% if anomalia.computador %}
-                        {{ anomalia.computador.sala.numero }}
-                    {% elif anomalia.sala %}
-                        {{ anomalia.sala.numero }}
-                    {% else %}
-                        <em>Não definida</em>
-                    {% endif %}
-                </p>
-                <p><strong>Tipo:</strong>
-                    {% if anomalia.tipo %}
-                        {{ anomalia.get_tipo_display }}
-                    {% else %}
-                        <em>Não especificado</em>
-                    {% endif %}
-                </p>
-            </div>
-            <div class="col-md-6">
-                <p><strong>Computador:</strong>
-                    {% if anomalia.computador %}
-                        {{ anomalia.computador.numero_identificacao }}
-                    {% else %}
-                        <em>Não aplicável</em>
-                    {% endif %}
-                </p>
-                <p><strong>Descrição:</strong><br>
-                    {{ anomalia.descricao|default:"Sem descrição"|linebreaks }}
-                </p>
-            </div>
-        </div>
+<div class="page-header">
+    <div>
+        <h2>Anomalia: {{ anomalia.titulo }}</h2>
+        <p>Consulta rápida da ocorrência e registo de observações adicionais.</p>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">
-        <h3 class="mb-0">Anexos</h3>
+<div class="section-stack">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Informação da Anomalia</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <p><strong>Título:</strong> {{ anomalia.titulo }}</p>
+                    <p><strong>Sala:</strong>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.sala.numero }}
+                        {% elif anomalia.sala %}
+                            {{ anomalia.sala.numero }}
+                        {% else %}
+                            <em>Não definida</em>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0"><strong>Tipo:</strong>
+                        {% if anomalia.tipo %}
+                            {{ anomalia.get_tipo_display }}
+                        {% else %}
+                            <em>Não especificado</em>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Computador:</strong>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.numero_identificacao }}
+                        {% else %}
+                            <em>Não aplicável</em>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0"><strong>Descrição:</strong><br>{{ anomalia.descricao|default:"Sem descrição"|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        {% if anexos %}
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Anexos</h5>
+        </div>
+        <div class="card-body">
+            {% if anexos %}
             <div class="row g-3">
                 {% for anexo in anexos %}
                     {% if anexo.tipo == "IMAGEM" %}
@@ -65,31 +71,32 @@
                     {% endif %}
                 {% endfor %}
             </div>
-        {% else %}
+            {% else %}
             <p class="mb-0">Sem anexos.</p>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">Adicionar Observações</h3>        
-    </div>
-    <div class="card-body">                                    
-        <form method="post">
-            {% csrf_token %}                                                            
-            <p><strong>Observações:</strong>
-            {{ form.observacoes }}
-            {% if form.observacoes.errors %}
-                <div class="invalid-feedback d-block">
-                    {{ form.observacoes.errors }}
+    <div class="card form-card">
+        <div class="card-header">
+            <h5 class="mb-0">Adicionar Observações</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+                    {{ form.observacoes }}
+                    {% if form.observacoes.errors %}
+                    <div class="invalid-feedback d-block">{{ form.observacoes.errors }}</div>
+                    {% endif %}
                 </div>
-            {% endif %}                   
-            <div class="mb-3 mt-3">
-                <button type="submit" class="btn btn-primary">Guardar Observação</button>
-                <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>                    
+                <div class="form-row-actions">
+                    <button type="submit" class="btn btn-primary">Guardar Observação</button>
+                    <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

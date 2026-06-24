@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
+
 {% block title %}Histórico de Anomalias{% endblock %}
 
 {% block content %}
-<h2>Histórico de Anomalias Resolvidas</h2>
+<div class="page-header">
+    <div>
+        <h2>Histórico de Anomalias Resolvidas</h2>
+        <p>Consulte o histórico das ocorrências concluídas e filtre por critérios relevantes.</p>
+    </div>
+</div>
 
-<div class="card mb-4">
+<div class="card form-card">
     <div class="card-header">
-        <h5 class="mb-0">Filtros</h5>
+        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
     </div>
     <div class="card-body">
         <form method="get" class="row g-3">
@@ -16,7 +22,7 @@
                 {{ field }}
             </div>
             {% endfor %}
-            <div class="col-12">
+            <div class="col-12 form-row-actions">
                 <button type="submit" class="btn btn-secondary">Filtrar</button>
                 <a href="{% url 'anomalias:historico_anomalias' %}" class="btn btn-outline-secondary">Limpar</a>
             </div>
@@ -24,37 +30,42 @@
     </div>
 </div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Título</th>
-            <th>Computador</th>
-            <th>Sala</th>
-            <th>Data de Resolução</th>
-            <th>Observações</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for anomalia in anomalias %}
-    <tr>
-        <td>{{ anomalia.titulo }}</td>
-        <td>{{ anomalia.computador|default:"-" }}</td>
-        <td>
-            {% if anomalia.computador %}
-                {{ anomalia.computador.sala.numero }}
-            {% elif anomalia.sala %}
-                {{ anomalia.sala.numero }}
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>{{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</td>
-        <td>{{ anomalia.observacoes|default:"-" }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5">Nenhuma anomalia resolvida encontrada.</td></tr>
-    {% endfor %}
-</tbody>
-
-</table>
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Computador</th>
+                    <th>Sala</th>
+                    <th>Data de Resolução</th>
+                    <th>Observações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anomalia in anomalias %}
+                <tr>
+                    <td>{{ anomalia.titulo }}</td>
+                    <td>{{ anomalia.computador|default:"-" }}</td>
+                    <td>
+                        {% if anomalia.computador %}
+                            {{ anomalia.computador.sala.numero }}
+                        {% elif anomalia.sala %}
+                            {{ anomalia.sala.numero }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</td>
+                    <td>{{ anomalia.observacoes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhuma anomalia resolvida encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
