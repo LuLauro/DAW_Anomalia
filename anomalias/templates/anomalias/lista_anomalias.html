@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h2>Anomalias</h2>
-        <p>Consulte ocorrências, atualize estados e aceda ao detalhe de cada registo.</p>
+        <p>Consulte ocorrências, atualize estados e acompanhe o fluxo até à resolução.</p>
     </div>
     <div class="page-actions">
         <a href="{% url 'anomalias:registar_anomalia' %}" class="btn btn-primary">
@@ -37,35 +37,21 @@
 
 <div class="table-card">
     <div class="table-responsive">
-        <table class="table">
+        <table class="table anomaly-table">
             <thead>
                 <tr>
                     <th>Título</th>
-                    <th>Computador</th>
                     <th>Sala</th>
-                    <th>Tipo</th>
-                    <th>Data Registo</th>
                     <th>Estado</th>
                     <th>Reportado Por</th>
-                    {% if user.groups.all.0.name != "Professor" %}
+                    <th>Data Registo</th>
                     <th>Ações</th>
-                    {% endif %}
-                    {% if user.is_superuser %}
-                    <th>Eliminar</th>
-                    {% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for anomalia in anomalias %}
-                <tr>
+                <tr class="anomaly-row anomaly-row-{{ anomalia.estado|lower }}">
                     <td>{{ anomalia.titulo }}</td>
-                    <td>
-                        {% if anomalia.computador %}
-                            {{ anomalia.computador.numero_identificacao }}
-                        {% else %}
-                            <em>-</em>
-                        {% endif %}
-                    </td>
                     <td>
                         {% if anomalia.computador %}
                             {{ anomalia.computador.sala.numero }}
@@ -76,54 +62,90 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if anomalia.tipo %}
-                            {{ anomalia.get_tipo_display }}
+                        {% if anomalia.estado == 'RESOLVIDO' %}
+                        <span class="status-badge status-badge-{{ anomalia.estado|lower }}">{{ anomalia.get_estado_display }}</span>
+                        {% elif user.groups.all.0.name != "Coordenador" %}
+                        <div class="status-field">
+                            <form method="post" action="{% url 'anomalias:atualizar_estado' anomalia.pk %}" class="d-inline-block">
+                                {% csrf_token %}
+                                <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm status-select status-select-{{ anomalia.estado|lower }}">
+                                    {% for value, label in anomalia.ESTADO_CHOICES %}
+                                    <option value="{{ value }}" {% if anomalia.estado == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </div>
                         {% else %}
-                            <em>-</em>
-                        {% endif %}
-                    </td>
-                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
-                    <td>
-                        {% if user.groups.all.0.name != "Coordenador" %}
-                        <form method="post" action="{% url 'anomalias:atualizar_estado' anomalia.pk %}" class="d-inline">
-                            {% csrf_token %}
-                            <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm status-select">
-                                {% for value, label in anomalia.ESTADO_CHOICES %}
-                                <option value="{{ value }}" {% if anomalia.estado == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </form>
-                        {% else %}
-                        <span class="badge bg-secondary">{{ anomalia.get_estado_display }}</span>
+                        <span class="status-badge status-badge-{{ anomalia.estado|lower }}">{{ anomalia.get_estado_display }}</span>
                         {% endif %}
                     </td>
                     <td>{{ anomalia.reportado_por.username }}</td>
-                    {% if user.groups.all.0.name != "Professor" %}
+                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
                     <td>
-                        <a href="{% url 'anomalias:adicionar_observacao' anomalia.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                        <div class="table-actions">
+                            <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                            {% if can_delete_resolved and anomalia.estado == 'RESOLVIDO' %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteAnomaliaModal"
+                                data-delete-url="{% url 'anomalias:eliminar_anomalia' anomalia.pk %}"
+                                data-delete-title="{{ anomalia.titulo }}"
+                            >
+                                <i class="fas fa-trash-alt"></i> Eliminar
+                            </button>
+                            {% endif %}
+                        </div>
                     </td>
-                    {% else %}
-                    <td>
-                        <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-info">Detalhe</a>
-                    </td>
-                    {% endif %}
-                    {% if user.is_superuser %}
-                    <td>
-                        {% if anomalia.estado == 'RESOLVIDO' %}
-                        <a href="{% url 'anomalias:eliminar_anomalia' anomalia.pk %}" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash-alt"></i> Eliminar
-                        </a>
-                        {% endif %}
-                    </td>
-                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">Nenhuma anomalia registada.</td>
+                    <td colspan="6" class="text-center">Nenhuma anomalia registada.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<div class="modal fade" id="deleteAnomaliaModal" tabindex="-1" aria-labelledby="deleteAnomaliaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content delete-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAnomaliaModalLabel">Eliminar Anomalia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Tem a certeza que pretende eliminar esta anomalia?</p>
+                <p class="text-muted mb-2">Esta ação irá removê-la da lista principal de anomalias.</p>
+                <p class="text-muted mb-0">A anomalia continuará disponível no Histórico de Anomalias Resolvidas para consulta futura.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" id="deleteAnomaliaForm">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const deleteModal = document.getElementById("deleteAnomaliaModal");
+    if (!deleteModal) return;
+
+    deleteModal.addEventListener("show.bs.modal", function (event) {
+        const button = event.relatedTarget;
+        const form = document.getElementById("deleteAnomaliaForm");
+        if (button && form) {
+            form.action = button.getAttribute("data-delete-url");
+        }
+    });
+});
+</script>
 {% endblock %}

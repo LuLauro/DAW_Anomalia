@@ -1,26 +1,35 @@
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
-from users.permissions import group_required, is_tecnico
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404, redirect, render
+
 from anomalias.models import Anomalia
-from users.permissions import (can_add_observacao, can_change_estado, can_delete_anomalia, can_view_anomalia)
+from users.permissions import group_required, is_admin, is_tecnico
+
+
+def _has_tecnico_access(user):
+    return user.is_authenticated and (
+        user.is_staff or is_admin(user) or is_tecnico(user)
+    )
+
+
+def _require_tecnico(request):
+    return _has_tecnico_access(request.user)
 
 
 @login_required
 @group_required(
-    is_tecnico,
+    _has_tecnico_access,
     error_message="Acesso restrito ao grupo Técnico.",
     redirect_to="anomalias:lista_anomalias",
 )
-
 def dashboard(request):
     anomalias_abertas = (
         Anomalia.objects.filter(ativo=True, estado__in=["PENDENTE", "EM_RESOLUCAO"])
         .select_related("computador", "sala")
         .order_by("-data_registo")
     )
-    total_resolvidas = Anomalia.objects.filter(ativo=True, estado="RESOLVIDO").count()
+    total_resolvidas = Anomalia.objects.filter(estado="RESOLVIDO").count()
 
     context = {
         "total_pendentes": anomalias_abertas.filter(estado="PENDENTE").count(),
@@ -53,7 +62,7 @@ def historico_anomalias(request):
         return redirect("anomalias:lista_anomalias")
 
     anomalias = (
-        Anomalia.objects.filter(ativo=True, estado="RESOLVIDO")
+        Anomalia.objects.filter(data_resolvida__isnull=False)
         .select_related("computador", "sala")
         .order_by("-data_resolvida", "-data_registo")
     )
@@ -68,7 +77,7 @@ def detalhe_anomalia(request, pk):
     anomalia = get_object_or_404(
         Anomalia.objects.select_related("computador", "sala"), pk=pk
     )
-    anexos = anomalia.anexos.all().order_by("-data_upload") # type: ignore
+    anexos = anomalia.anexos.all().order_by("-data_upload")  # type: ignore
     return render(
         request,
         "tecnico/detalhe_anomalia.html",

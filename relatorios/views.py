@@ -63,6 +63,10 @@ def _percent(valor, total):
     return round((valor / total) * 100)
 
 
+def _anomalia_relatorio_filtro_base():
+    return Q(ativo=True) | Q(estado="RESOLVIDO", data_resolvida__isnull=False)
+
+
 def grafico_estado_base64(resolvidas, pendentes, em_resolucao):
     labels = ["Resolvidas", "Pendentes", "Em resolucao"]
     valores = [resolvidas, pendentes, em_resolucao]
@@ -158,7 +162,9 @@ def gerar_relatorio_pdf(request):
         messages.error(request, "Intervalo de datas invalido.")
         return redirect("relatorios:form")
 
-    filtros = Q(ativo=True, data_registo__date__range=(inicio, fim))
+    filtros = _anomalia_relatorio_filtro_base() & Q(
+        data_registo__date__range=(inicio, fim)
+    )
 
     sala_id = request.GET.get("sala")
     if sala_id:
@@ -224,7 +230,10 @@ def relatorio_semanal_pdf(request):
     fim = inicio + timedelta(days=6)
 
     anomalias = (
-        Anomalia.objects.filter(ativo=True, data_registo__date__range=(inicio, fim))
+        Anomalia.objects.filter(
+            _anomalia_relatorio_filtro_base(),
+            data_registo__date__range=(inicio, fim),
+        )
         .select_related("computador", "sala", "reportado_por", "computador__sala")
         .order_by("-data_registo")
     )
