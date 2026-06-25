@@ -87,7 +87,7 @@
                         {% if user.groups.all.0.name != "Coordenador" %}
                         <form method="post" action="{% url 'anomalias:atualizar_estado' anomalia.pk %}" class="d-inline">
                             {% csrf_token %}
-                            <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm">
+                            <select name="estado" onchange="this.form.submit()" class="form-select form-select-sm status-select">
                                 {% for value, label in anomalia.ESTADO_CHOICES %}
                                 <option value="{{ value }}" {% if anomalia.estado == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}

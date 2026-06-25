@@ -61,16 +61,6 @@
                         <span>Histórico</span>
                     </a>
 
-                    {% if user.is_staff or user|has_group:"Coordenador" %}
-                    <a class="sidebar-link {% if request.resolver_match.namespace == 'notificacoes' %}is-active{% endif %}" href="{% url 'notificacoes:list' %}">
-                        <i class="fas fa-bell"></i>
-                        <span>Notificações</span>
-                        {% if count > 0 %}
-                        <span class="sidebar-pill">{{ count }}</span>
-                        {% endif %}
-                    </a>
-                    {% endif %}
-
                     {% if user|has_group:"Administrador" or user|has_group:"Coordenador" or user|has_group:"Tecnico" %}
                     <a class="sidebar-link {% if request.resolver_match.namespace == 'relatorios' %}is-active{% endif %}" href="{% url 'relatorios:form' %}">
                         <i class="fas fa-file-pdf"></i>
