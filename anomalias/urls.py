@@ -14,5 +14,6 @@ urlpatterns = [
     path('historico/', views.historico_anomalias, name='historico_anomalias'),
     path('eliminar/<int:pk>/', views.eliminar_anomalia, name='eliminar_anomalia'),
     path('nova-geral/', views.registar_anomalia_geral, name='registar_anomalia_geral'),
+    path('computadores-por-sala/', views.computadores_por_sala, name='computadores_por_sala'),
     
 ]

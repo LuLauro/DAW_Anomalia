@@ -22,6 +22,9 @@
                 <div class="mb-3">
                     <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                     {{ field }}
+                    {% if field.name == "computador" %}
+                    <div id="computer-field-feedback" class="form-text text-muted"></div>
+                    {% endif %}
                     {% if field.help_text %}
                     <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}
@@ -38,4 +41,141 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const tomSelectCssId = "tom-select-css";
+    if (!document.getElementById(tomSelectCssId)) {
+        const link = document.createElement("link");
+        link.id = tomSelectCssId;
+        link.rel = "stylesheet";
+        link.href = "https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css";
+        document.head.appendChild(link);
+    }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const roomSelect = document.getElementById("id_sala");
+    const computerSelect = document.getElementById("id_computador");
+    const feedback = document.getElementById("computer-field-feedback");
+    const computersUrl = "{% url 'anomalias:computadores_por_sala' %}";
+
+    if (!roomSelect || !computerSelect) return;
+
+    function renderNoResults(message) {
+        return function () {
+            return '<div class="no-results">' + message + "</div>";
+        };
+    }
+
+    function setFeedback(message, isError) {
+        if (!feedback) return;
+        feedback.textContent = message || "";
+        feedback.classList.toggle("text-danger", Boolean(isError));
+        feedback.classList.toggle("text-muted", !isError);
+    }
+
+    const roomControl = new TomSelect(roomSelect, {
+        create: false,
+        maxItems: 1,
+        searchField: ["text"],
+        placeholder: "Pesquisar sala...",
+        allowEmptyOption: true,
+        render: {
+            no_results: renderNoResults("Nenhuma sala encontrada")
+        }
+    });
+
+    const initialComputerValue = computerSelect.value;
+
+    const computerControl = new TomSelect(computerSelect, {
+        create: false,
+        maxItems: 1,
+        searchField: ["text"],
+        placeholder: "Selecione uma sala primeiro",
+        allowEmptyOption: true,
+        render: {
+            no_results: renderNoResults("Nenhum computador encontrado")
+        }
+    });
+
+    function resetComputerField(disabled, placeholderText) {
+        computerControl.clear(true);
+        computerControl.clearOptions();
+        computerControl.addOption({ value: "", text: "Selecionar computador (opcional)" });
+        if (placeholderText) {
+            computerControl.settings.placeholder = placeholderText;
+            computerControl.inputState();
+        }
+        if (disabled) {
+            computerControl.disable();
+        } else {
+            computerControl.enable();
+        }
+        computerControl.refreshOptions(false);
+    }
+
+    async function loadComputersForRoom(roomId) {
+        setFeedback("", false);
+
+        if (!roomId) {
+            resetComputerField(true, "Selecione uma sala primeiro");
+            return;
+        }
+
+        resetComputerField(true, "A carregar computadores...");
+
+        try {
+            const response = await fetch(computersUrl + "?sala_id=" + encodeURIComponent(roomId), {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+
+            if (!response.ok) {
+                throw new Error("request_failed");
+            }
+
+            const payload = await response.json();
+            const computadores = Array.isArray(payload.computadores) ? payload.computadores : [];
+
+            resetComputerField(false, computadores.length ? "Pesquisar computador..." : "Sem computadores nesta sala");
+
+            computadores.forEach(function (computador) {
+                computerControl.addOption({
+                    value: String(computador.id),
+                    text: computador.text
+                });
+            });
+            computerControl.refreshOptions(false);
+
+            if (initialComputerValue) {
+                const match = computadores.find(function (computador) {
+                    return String(computador.id) === String(initialComputerValue);
+                });
+                if (match) {
+                    computerControl.setValue(String(initialComputerValue), true);
+                }
+            }
+        } catch (error) {
+            resetComputerField(false, "Não foi possível carregar os computadores");
+            setFeedback("Erro ao carregar computadores desta sala. Tente novamente.", true);
+        }
+    }
+
+    const initialRoomValue = roomSelect.value;
+    if (initialRoomValue) {
+        roomControl.setValue(initialRoomValue, true);
+        loadComputersForRoom(initialRoomValue);
+    } else {
+        resetComputerField(true, "Selecione uma sala primeiro");
+    }
+
+    roomControl.on("change", function (value) {
+        loadComputersForRoom(value);
+    });
+});
+</script>
 {% endblock %}

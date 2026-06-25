@@ -1,9 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from computadores.models import Computador
 from users.permissions import can_add_observacao, can_delete_anomalia, can_view_anomalia, is_admin
 
 from .forms import (
@@ -244,3 +245,24 @@ Reportado por: {request.user.get_full_name()} ({request.user.email})
     else:
         form = AnomaliaGeralForm()
     return render(request, "anomalias/registar_anomalia_geral.html", {"form": form})
+
+
+@login_required
+def computadores_por_sala(request):
+    sala_id = request.GET.get("sala_id")
+    if not sala_id:
+        return JsonResponse({"computadores": []})
+
+    computadores = (
+        Computador.objects.filter(sala_id=sala_id)
+        .order_by("numero_identificacao")
+        .values("id", "numero_identificacao")
+    )
+    data = [
+        {
+            "id": computador["id"],
+            "text": f"PC {computador['numero_identificacao']}",
+        }
+        for computador in computadores
+    ]
+    return JsonResponse({"computadores": data})

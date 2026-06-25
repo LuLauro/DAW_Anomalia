@@ -39,3 +39,42 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const tomSelectCssId = "tom-select-css";
+    if (!document.getElementById(tomSelectCssId)) {
+        const link = document.createElement("link");
+        link.id = tomSelectCssId;
+        link.rel = "stylesheet";
+        link.href = "https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.bootstrap5.min.css";
+        document.head.appendChild(link);
+    }
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const generalRoomSelect = document.getElementById("id_sala");
+    if (!generalRoomSelect) return;
+
+    function renderNoResults(message) {
+        return function () {
+            return '<div class="no-results">' + message + "</div>";
+        };
+    }
+
+    new TomSelect(generalRoomSelect, {
+        create: false,
+        maxItems: 1,
+        searchField: ["text"],
+        placeholder: "Pesquisar sala...",
+        allowEmptyOption: true,
+        render: {
+            no_results: renderNoResults("Nenhuma sala encontrada")
+        }
+    });
+});
+</script>
+{% endblock %}

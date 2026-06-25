@@ -1,13 +1,35 @@
+import os
+
 from django import forms
 from django.utils.datastructures import MultiValueDict
-import os
-from .models import Anomalia
+
 from computadores.models import Computador
 from salas.models import Sala
 
-BASE_WIDGETS = {'class': 'form-control'}
+from .models import Anomalia
+
+BASE_WIDGETS = {"class": "form-control"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024
 MAX_VIDEO_SIZE = 50 * 1024 * 1024
+
+
+class SearchableSelect(forms.Select):
+    pass
+
+
+class ComputerRoomSelect(forms.Select):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(
+            name, value, label, selected, index, subindex=subindex, attrs=attrs
+        )
+        if value:
+            try:
+                computador = self.choices.queryset.get(pk=value)
+            except Exception:
+                computador = None
+            if computador is not None:
+                option["attrs"]["data-room-id"] = str(computador.sala_id)
+        return option
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -31,16 +53,27 @@ class MultipleFileField(forms.FileField):
         _validar_arquivos(data, self.allowed_exts, self.max_size)
         return data
 
+
 def _validar_arquivos(arquivos, extensoes_permitidas, tamanho_maximo):
     for arquivo in arquivos:
         ext = os.path.splitext(arquivo.name)[1].lower().lstrip(".")
         if ext not in extensoes_permitidas:
-            raise forms.ValidationError("Tipo de ficheiro nÃ£o permitido.")
+            raise forms.ValidationError("Tipo de ficheiro não permitido.")
         if arquivo.size > tamanho_maximo:
             raise forms.ValidationError("Tamanho de ficheiro excede o limite permitido.")
     return arquivos
 
+
 class AnomaliaForm(forms.ModelForm):
+    sala = forms.ModelChoiceField(
+        queryset=Sala.objects.order_by("numero"),
+        required=False,
+        label="Sala",
+        empty_label="",
+        widget=SearchableSelect(
+            attrs={**BASE_WIDGETS, "class": "form-select js-room-select", "data-tom-select": "room"}
+        ),
+    )
     imagens = MultipleFileField(
         required=False,
         allowed_exts={"jpg", "jpeg", "png"},
@@ -58,12 +91,64 @@ class AnomaliaForm(forms.ModelForm):
 
     class Meta:
         model = Anomalia
-        fields = ['titulo', 'descricao', 'computador']
+        fields = ["titulo", "descricao", "sala", "computador"]
         widgets = {
-            'titulo': forms.TextInput(attrs=BASE_WIDGETS),
-            'descricao': forms.Textarea(attrs={**BASE_WIDGETS, 'rows': 3}),
-            'computador': forms.Select(attrs=BASE_WIDGETS),
+            "titulo": forms.TextInput(attrs=BASE_WIDGETS),
+            "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),
+            "computador": ComputerRoomSelect(
+                attrs={
+                    **BASE_WIDGETS,
+                    "class": "form-select js-computer-select",
+                    "data-tom-select": "computer",
+                }
+            ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        computadores_queryset = Computador.objects.select_related("sala").order_by(
+            "sala__numero", "numero_identificacao"
+        )
+        self.fields["computador"].queryset = computadores_queryset
+
+        sala_inicial = None
+        computador_atual = self.instance.computador if getattr(self.instance, "pk", None) else None
+        if computador_atual:
+            sala_inicial = computador_atual.sala
+            self.initial.setdefault("sala", computador_atual.sala_id)
+        elif getattr(self.instance, "sala_id", None):
+            sala_inicial = self.instance.sala
+
+        sala_data = self.data.get("sala") if self.is_bound else None
+        computador_disponivel = False
+        if sala_data:
+            try:
+                sala_id = int(sala_data)
+            except (TypeError, ValueError):
+                sala_id = None
+            if sala_id:
+                computador_disponivel = computadores_queryset.filter(sala_id=sala_id).exists()
+        elif sala_inicial:
+            computador_disponivel = computadores_queryset.filter(sala=sala_inicial).exists()
+
+        self.fields["computador"].required = False
+        if not computador_disponivel and not computador_atual:
+            self.fields["computador"].widget.attrs["disabled"] = "disabled"
+        else:
+            self.fields["computador"].widget.attrs.pop("disabled", None)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        sala = cleaned_data.get("sala")
+        computador = cleaned_data.get("computador")
+
+        if computador and sala and computador.sala_id != sala.id:
+            self.add_error("computador", "O computador selecionado não pertence à sala escolhida.")
+
+        if computador and not sala:
+            cleaned_data["sala"] = computador.sala
+
+        return cleaned_data
 
     def clean_imagens(self):
         arquivos = self.files.getlist("imagens")
@@ -72,8 +157,18 @@ class AnomaliaForm(forms.ModelForm):
     def clean_videos(self):
         arquivos = self.files.getlist("videos")
         return _validar_arquivos(arquivos, {"mp4"}, MAX_VIDEO_SIZE)
+
 
 class AnomaliaGeralForm(forms.ModelForm):
+    sala = forms.ModelChoiceField(
+        queryset=Sala.objects.order_by("numero"),
+        required=False,
+        label="Sala",
+        empty_label="",
+        widget=SearchableSelect(
+            attrs={**BASE_WIDGETS, "class": "form-select js-room-select", "data-tom-select": "room"}
+        ),
+    )
     imagens = MultipleFileField(
         required=False,
         allowed_exts={"jpg", "jpeg", "png"},
@@ -91,12 +186,11 @@ class AnomaliaGeralForm(forms.ModelForm):
 
     class Meta:
         model = Anomalia
-        fields = ['titulo', 'descricao', 'sala', 'tipo']
+        fields = ["titulo", "descricao", "sala", "tipo"]
         widgets = {
-            'titulo': forms.TextInput(attrs=BASE_WIDGETS),
-            'descricao': forms.Textarea(attrs={**BASE_WIDGETS, 'rows': 3}),
-            'sala': forms.Select(attrs=BASE_WIDGETS),
-            'tipo': forms.Select(attrs=BASE_WIDGETS),
+            "titulo": forms.TextInput(attrs=BASE_WIDGETS),
+            "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),
+            "tipo": forms.Select(attrs=BASE_WIDGETS),
         }
 
     def clean_imagens(self):
@@ -106,30 +200,48 @@ class AnomaliaGeralForm(forms.ModelForm):
     def clean_videos(self):
         arquivos = self.files.getlist("videos")
         return _validar_arquivos(arquivos, {"mp4"}, MAX_VIDEO_SIZE)
+
 
 class AnomaliaFilterForm(forms.Form):
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.all(),
         required=False,
         empty_label="Todas as Salas",
-        widget=forms.Select(attrs=BASE_WIDGETS)
+        widget=forms.Select(attrs=BASE_WIDGETS),
     )
     estado = forms.ChoiceField(
-        choices=[('', 'Todos os Estados')] + Anomalia.ESTADO_CHOICES,
+        choices=[("", "Todos os Estados")] + Anomalia.ESTADO_CHOICES,
         required=False,
-        widget=forms.Select(attrs=BASE_WIDGETS)
+        widget=forms.Select(attrs=BASE_WIDGETS),
     )
+
 
 class ObservacaoForm(forms.ModelForm):
     class Meta:
         model = Anomalia
-        fields = ['observacoes']
+        fields = ["observacoes"]
         widgets = {
-            'observacoes': forms.Textarea(attrs={**BASE_WIDGETS, 'rows': 4, 'placeholder': 'Escreva sua observação aqui...'}),
+            "observacoes": forms.Textarea(
+                attrs={**BASE_WIDGETS, "rows": 4, "placeholder": "Escreva sua observação aqui..."}
+            ),
         }
 
+
 class FiltroHistoricoForm(forms.Form):
-    data_resolvida = forms.DateField(required=False, label='Data de Resolução',
-                                     widget=forms.DateInput(attrs={'type': 'date', **BASE_WIDGETS}))
-    sala = forms.ModelChoiceField(queryset=Sala.objects.all(), required=False, label='Sala', widget=forms.Select(attrs=BASE_WIDGETS))
-    computador = forms.ModelChoiceField(queryset=Computador.objects.all(), required=False, label='Computador', widget=forms.Select(attrs=BASE_WIDGETS))
+    data_resolvida = forms.DateField(
+        required=False,
+        label="Data de Resolução",
+        widget=forms.DateInput(attrs={"type": "date", **BASE_WIDGETS}),
+    )
+    sala = forms.ModelChoiceField(
+        queryset=Sala.objects.all(),
+        required=False,
+        label="Sala",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
+    computador = forms.ModelChoiceField(
+        queryset=Computador.objects.all(),
+        required=False,
+        label="Computador",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
