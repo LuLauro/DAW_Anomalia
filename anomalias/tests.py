@@ -1,3 +1,120 @@
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
+from django.urls import reverse
 
-# Create your tests here.
+from computadores.models import Computador
+from salas.models import Sala
+
+from .models import Anomalia
+
+
+class CoordinatorAccessRestrictionTests(TestCase):
+    def setUp(self):
+        self.group = Group.objects.create(name="Coordenador")
+        self.coordinator = User.objects.create_user(
+            username="coord",
+            password="secret123",
+        )
+        self.coordinator.groups.add(self.group)
+
+        self.other_user = User.objects.create_user(
+            username="other",
+            password="secret123",
+        )
+
+        self.assigned_room = Sala.objects.create(
+            numero="C2.3",
+            coordinator=self.coordinator,
+        )
+        self.foreign_room = Sala.objects.create(
+            numero="C2.9",
+            coordinator=self.other_user,
+        )
+
+        self.assigned_computer = Computador.objects.create(
+            numero_identificacao="PC-01",
+            sala=self.assigned_room,
+            marca="Dell",
+            modelo="Optiplex",
+        )
+        self.foreign_computer = Computador.objects.create(
+            numero_identificacao="PC-99",
+            sala=self.foreign_room,
+            marca="HP",
+            modelo="EliteDesk",
+        )
+
+        self.assigned_anomalia = Anomalia.objects.create(
+            titulo="Assigned",
+            descricao="Assigned room anomaly",
+            computador=self.assigned_computer,
+            reportado_por=self.other_user,
+        )
+        self.foreign_anomalia = Anomalia.objects.create(
+            titulo="Foreign",
+            descricao="Foreign room anomaly",
+            computador=self.foreign_computer,
+            reportado_por=self.other_user,
+        )
+
+        self.client.force_login(self.coordinator)
+
+    def test_coordinator_only_sees_assigned_rooms(self):
+        response = self.client.get(reverse("salas:lista_salas"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context["salas"].order_by("id"),
+            [self.assigned_room],
+            transform=lambda sala: sala,
+        )
+
+    def test_coordinator_cannot_access_foreign_room_detail(self):
+        response = self.client.get(
+            reverse("salas:detalhe_sala", args=[self.foreign_room.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_coordinator_only_sees_assigned_computers(self):
+        response = self.client.get(reverse("computadores:lista_computadores"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context["computadores"].order_by("id"),
+            [self.assigned_computer],
+            transform=lambda computador: computador,
+        )
+
+    def test_coordinator_cannot_access_foreign_computer_detail(self):
+        response = self.client.get(
+            reverse("computadores:detalhe_computador", args=[self.foreign_computer.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_coordinator_only_sees_assigned_anomalies(self):
+        response = self.client.get(reverse("anomalias:lista_anomalias"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context["anomalias"].order_by("id"),
+            [self.assigned_anomalia],
+            transform=lambda anomalia: anomalia,
+        )
+
+    def test_coordinator_cannot_access_foreign_anomaly_detail(self):
+        response = self.client.get(
+            reverse("anomalias:detalhe_anomalia", args=[self.foreign_anomalia.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_coordinator_cannot_load_foreign_room_computers_via_ajax(self):
+        response = self.client.get(
+            reverse("anomalias:computadores_por_sala"),
+            {"sala_id": self.foreign_room.pk},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"computadores": []})

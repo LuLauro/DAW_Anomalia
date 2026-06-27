@@ -2,8 +2,15 @@
 from django import forms
 from .models import Computador
 from salas.models import Sala
+from users.access import filter_salas_for_user
 
 class ComputadorForm(forms.ModelForm):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.all(), user
+        ).order_by("numero")
+
     class Meta:
         model = Computador
         fields = ['numero_identificacao', 'sala', 'marca',
@@ -19,6 +26,12 @@ class ComputadorForm(forms.ModelForm):
 
 
 class FiltroComputadorForm(forms.Form):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.all(), user
+        ).order_by("numero")
+
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.all(),
         required=False,

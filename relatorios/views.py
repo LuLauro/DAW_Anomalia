@@ -18,6 +18,7 @@ from xhtml2pdf import pisa
 
 from anomalias.models import Anomalia
 from salas.models import Sala
+from users.access import filter_anomalias_for_user, filter_salas_for_user
 
 
 def _user_can_access(user):
@@ -138,7 +139,7 @@ def relatorio_form(request):
         messages.error(request, "Acesso restrito a Administrador, Coordenador ou Tecnico.")
         return redirect("anomalias:lista_anomalias")
 
-    salas = Sala.objects.order_by("numero")
+    salas = filter_salas_for_user(Sala.objects.all(), request.user).order_by("numero")
     context = {
         "salas": salas,
         "estado_choices": Anomalia.ESTADO_CHOICES,
@@ -178,10 +179,11 @@ def gerar_relatorio_pdf(request):
     if tipo:
         filtros &= Q(tipo=tipo)
 
-    anomalias = (
+    anomalias = filter_anomalias_for_user(
         Anomalia.objects.filter(filtros)
         .select_related("computador", "sala", "reportado_por")
-        .order_by("-data_registo")
+        .order_by("-data_registo"),
+        request.user,
     )
 
     total_anomalias = anomalias.count()
@@ -229,13 +231,14 @@ def relatorio_semanal_pdf(request):
     inicio = hoje - timedelta(days=hoje.weekday())
     fim = inicio + timedelta(days=6)
 
-    anomalias = (
+    anomalias = filter_anomalias_for_user(
         Anomalia.objects.filter(
             _anomalia_relatorio_filtro_base(),
             data_registo__date__range=(inicio, fim),
         )
         .select_related("computador", "sala", "reportado_por", "computador__sala")
-        .order_by("-data_registo")
+        .order_by("-data_registo"),
+        request.user,
     )
 
     total_anomalias = anomalias.count()

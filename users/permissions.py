@@ -3,6 +3,8 @@ from functools import wraps
 from django.contrib import messages
 from django.shortcuts import redirect
 
+from users.access import filter_anomalias_for_user
+
 
 def has_group(user, group_name):
     return user.is_authenticated and user.groups.filter(name=group_name).exists()
@@ -27,13 +29,15 @@ def is_coordenador(user):
 
 
 def can_view_anomalia(user, anomalia):
-    if is_admin(user) or is_tecnico(user) or is_coordenador(user):
+    if is_admin(user) or is_tecnico(user):
         return True
 
-    if is_professor(user):
-        return anomalia.reportado_por == user
+    if not user.is_authenticated:
+        return False
 
-    return False
+    return filter_anomalias_for_user(
+        anomalia.__class__.objects.filter(pk=anomalia.pk), user
+    ).exists()
 
 def is_tecnico_or_admin(user):
     return is_tecnico(user) or is_admin(user)
@@ -43,7 +47,9 @@ def can_change_estado(user, anomalia):
 
 
 def can_add_observacao(user, anomalia):
-    return is_admin(user) or is_tecnico(user) or is_coordenador(user)
+    return can_view_anomalia(user, anomalia) and (
+        is_admin(user) or is_tecnico(user) or is_coordenador(user)
+    )
 
 
 def can_delete_anomalia(user, anomalia):

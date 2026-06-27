@@ -27,8 +27,8 @@
                 </div>
 
                 <nav class="sidebar-nav">
-                    {% if user.is_staff %}
-                    <a class="sidebar-link {% if request.resolver_match.namespace == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard:index' %}">
+                    {% if user.is_staff or user|has_group:"Coordenador" %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'dashboard' %}is-active{% endif %}" href="{% if user.is_staff %}{% url 'dashboard:index' %}{% elif user|has_group:'Coordenador' %}{% url 'dashboard:coordinator' %}{% endif %}">
                         <i class="fas fa-chart-line"></i>
                         <span>Dashboard</span>
                     </a>

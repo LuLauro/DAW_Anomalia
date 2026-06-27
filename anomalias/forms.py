@@ -5,6 +5,7 @@ from django.utils.datastructures import MultiValueDict
 
 from computadores.models import Computador
 from salas.models import Sala
+from users.access import filter_computadores_for_user, filter_salas_for_user
 
 from .models import Anomalia
 
@@ -104,11 +105,14 @@ class AnomaliaForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        computadores_queryset = Computador.objects.select_related("sala").order_by(
-            "sala__numero", "numero_identificacao"
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.order_by("numero"), user
         )
+        computadores_queryset = filter_computadores_for_user(
+            Computador.objects.select_related("sala"), user
+        ).order_by("sala__numero", "numero_identificacao")
         self.fields["computador"].queryset = computadores_queryset
 
         sala_inicial = None
@@ -193,6 +197,12 @@ class AnomaliaGeralForm(forms.ModelForm):
             "tipo": forms.Select(attrs=BASE_WIDGETS),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.order_by("numero"), user
+        )
+
     def clean_imagens(self):
         arquivos = self.files.getlist("imagens")
         return _validar_arquivos(arquivos, {"jpg", "jpeg", "png"}, MAX_IMAGE_SIZE)
@@ -203,6 +213,12 @@ class AnomaliaGeralForm(forms.ModelForm):
 
 
 class AnomaliaFilterForm(forms.Form):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.all(), user
+        ).order_by("numero")
+
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.all(),
         required=False,
@@ -228,6 +244,15 @@ class ObservacaoForm(forms.ModelForm):
 
 
 class FiltroHistoricoForm(forms.Form):
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sala"].queryset = filter_salas_for_user(
+            Sala.objects.all(), user
+        ).order_by("numero")
+        self.fields["computador"].queryset = filter_computadores_for_user(
+            Computador.objects.all(), user
+        ).order_by("sala__numero", "numero_identificacao")
+
     data_resolvida = forms.DateField(
         required=False,
         label="Data de Resolução",

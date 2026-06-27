@@ -26,7 +26,7 @@ class CustomLoginView(LoginView):
             elif is_professor(user):
                 return '/anomalias/'
             elif is_coordenador(user):
-                return '/anomalias/'
+                return '/dashboard/coordenador/'
             else:
                 return '/'
     

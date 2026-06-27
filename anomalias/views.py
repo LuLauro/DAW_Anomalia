@@ -1,11 +1,16 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import Group
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from computadores.models import Computador
-from users.permissions import can_add_observacao, can_delete_anomalia, can_view_anomalia, is_admin
+from users.access import filter_anomalias_for_user, filter_computadores_for_user
+from users.permissions import (
+    can_add_observacao,
+    can_delete_anomalia,
+    can_view_anomalia,
+    is_admin,
+)
 
 from .forms import (
     AnomaliaFilterForm,
@@ -19,15 +24,14 @@ from .utils import enviar_email_grupos
 
 @login_required
 def lista_anomalias(request):
-    anomalias = (
+    anomalias = filter_anomalias_for_user(
         Anomalia.objects.filter(ativo=True)
         .select_related("computador", "sala", "computador__sala", "reportado_por")
-        .order_by("-data_registo")
+        .order_by("-data_registo"),
+        request.user,
     )
-    if request.user.groups.filter(name="Professor").exists():
-        anomalias = anomalias.filter(reportado_por=request.user)
 
-    form = AnomaliaFilterForm(request.GET)
+    form = AnomaliaFilterForm(request.GET, user=request.user)
     if form.is_valid():
         sala = form.cleaned_data.get("sala")
         estado = form.cleaned_data.get("estado")
@@ -49,7 +53,7 @@ def lista_anomalias(request):
 @login_required
 def registar_anomalia(request):
     if request.method == "POST":
-        form = AnomaliaForm(request.POST, request.FILES)
+        form = AnomaliaForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             anomalia = form.save(commit=False)
             anomalia.reportado_por = request.user
@@ -63,28 +67,32 @@ def registar_anomalia(request):
             mensagem = f"""
 Foi registada uma nova anomalia.
 
-Título: {anomalia.titulo}
+TÃ­tulo: {anomalia.titulo}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
-Descrição: {anomalia.descricao}
+DescriÃ§Ã£o: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Criada", mensagem)
             messages.success(request, "Anomalia registada com sucesso!")
             return redirect("anomalias:lista_anomalias")
     else:
-        form = AnomaliaForm()
+        form = AnomaliaForm(user=request.user)
     return render(request, "anomalias/registar_anomalia.html", {"form": form})
 
 
 @login_required
 def atualizar_estado(request, pk):
     anomalia = get_object_or_404(
-        Anomalia.objects.select_related("computador", "sala"), pk=pk
+        filter_anomalias_for_user(
+            Anomalia.objects.select_related("computador", "sala"),
+            request.user,
+        ),
+        pk=pk,
     )
 
     if request.user.groups.filter(name="Coordenador").exists():
-        messages.warning(request, "Coordenadores não podem alterar o estado.")
+        messages.warning(request, "Coordenadores nÃ£o podem alterar o estado.")
         return redirect("anomalias:lista_anomalias")
 
     if (
@@ -92,7 +100,7 @@ def atualizar_estado(request, pk):
         and anomalia.reportado_por != request.user
     ):
         messages.warning(
-            request, "Professores só podem alterar o estado das suas próprias anomalias."
+            request, "Professores sÃ³ podem alterar o estado das suas prÃ³prias anomalias."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -108,7 +116,7 @@ def atualizar_estado(request, pk):
             mensagem = f"""
 O estado de uma anomalia foi atualizado.
 
-Título: {anomalia.titulo}
+TÃ­tulo: {anomalia.titulo}
 Novo estado: {anomalia.estado}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
@@ -121,11 +129,14 @@ Alterado por: {request.user.get_full_name()} ({request.user.email})
 
 @login_required
 def adicionar_observacao(request, pk):
-    anomalia = get_object_or_404(Anomalia, pk=pk)
+    anomalia = get_object_or_404(
+        filter_anomalias_for_user(Anomalia.objects.all(), request.user),
+        pk=pk,
+    )
 
     if not can_add_observacao(request.user, anomalia):
         messages.warning(
-            request, "Você não tem permissão para adicionar observações."
+            request, "VocÃª nÃ£o tem permissÃ£o para adicionar observaÃ§Ãµes."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -147,13 +158,14 @@ def _criar_anexos(anomalia, imagens, videos):
 @login_required
 def detalhe_anomalia(request, pk):
     anomalia = get_object_or_404(
-        Anomalia.objects.select_related("computador", "sala", "computador__sala", "reportado_por"),
+        filter_anomalias_for_user(
+            Anomalia.objects.select_related(
+                "computador", "sala", "computador__sala", "reportado_por"
+            ),
+            request.user,
+        ),
         pk=pk,
     )
-
-    if not can_view_anomalia(request.user, anomalia):
-        messages.warning(request, "Você não tem permissão para ver esta anomalia.")
-        return redirect("anomalias:lista_anomalias")
 
     anexos = anomalia.anexos.all().order_by("-data_upload")
 
@@ -166,20 +178,25 @@ def detalhe_anomalia(request, pk):
 
 @login_required
 def ver_anexo(request, pk):
-    anexo = get_object_or_404(AnexoAnomalia, pk=pk)
-    if (
-        request.user.groups.filter(name="Professor").exists()
-        and anexo.anomalia.reportado_por != request.user
-    ):
+    anexo = get_object_or_404(
+        AnexoAnomalia.objects.select_related(
+            "anomalia", "anomalia__sala", "anomalia__computador__sala"
+        ),
+        pk=pk,
+    )
+    if not can_view_anomalia(request.user, anexo.anomalia):
         raise Http404()
     return FileResponse(anexo.arquivo.open("rb"), as_attachment=False)
 
 
 @login_required
 def historico_anomalias(request):
-    form = FiltroHistoricoForm(request.GET or None)
-    anomalias = Anomalia.objects.filter(data_resolvida__isnull=False).select_related(
-        "computador", "sala", "computador__sala"
+    form = FiltroHistoricoForm(request.GET or None, user=request.user)
+    anomalias = filter_anomalias_for_user(
+        Anomalia.objects.filter(data_resolvida__isnull=False).select_related(
+            "computador", "sala", "computador__sala"
+        ),
+        request.user,
     )
     if form.is_valid():
         if form.cleaned_data.get("data_resolvida"):
@@ -202,7 +219,10 @@ def historico_anomalias(request):
 
 @login_required
 def eliminar_anomalia(request, pk):
-    anomalia = get_object_or_404(Anomalia, pk=pk)
+    anomalia = get_object_or_404(
+        filter_anomalias_for_user(Anomalia.objects.all(), request.user),
+        pk=pk,
+    )
     if not can_delete_anomalia(request.user, anomalia):
         messages.warning(
             request, "Apenas administradores podem eliminar anomalias resolvidas."
@@ -221,7 +241,7 @@ def eliminar_anomalia(request, pk):
 @login_required
 def registar_anomalia_geral(request):
     if request.method == "POST":
-        form = AnomaliaGeralForm(request.POST, request.FILES)
+        form = AnomaliaGeralForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             anomalia = form.save(commit=False)
             anomalia.reportado_por = request.user
@@ -235,15 +255,15 @@ def registar_anomalia_geral(request):
             mensagem = f"""
 Foi registada uma nova anomalia geral.
 
-Título: {anomalia.titulo}
-Descrição: {anomalia.descricao}
+TÃ­tulo: {anomalia.titulo}
+DescriÃ§Ã£o: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Geral Criada", mensagem)
             messages.success(request, "Anomalia geral registada com sucesso.")
             return redirect("anomalias:lista_anomalias")
     else:
-        form = AnomaliaGeralForm()
+        form = AnomaliaGeralForm(user=request.user)
     return render(request, "anomalias/registar_anomalia_geral.html", {"form": form})
 
 
@@ -254,7 +274,8 @@ def computadores_por_sala(request):
         return JsonResponse({"computadores": []})
 
     computadores = (
-        Computador.objects.filter(sala_id=sala_id)
+        filter_computadores_for_user(Computador.objects.all(), request.user)
+        .filter(sala_id=sala_id)
         .order_by("numero_identificacao")
         .values("id", "numero_identificacao")
     )
