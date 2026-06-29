@@ -6,6 +6,16 @@ from django.conf import settings
 from django.utils import timezone
 
 
+ASSISTANT_PLACEHOLDER_RESPONSE = "🚧 O Assistente IA será ligado ao Gemini na próxima fase."
+
+
+def generate_assistant_chat_response(message):
+    normalized_message = (message or "").strip()
+    if not normalized_message:
+        return "Não foi possível processar a mensagem."
+    return ASSISTANT_PLACEHOLDER_RESPONSE
+
+
 class AIAgentService:
     """
     Serviço responsável por:

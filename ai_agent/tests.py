@@ -56,3 +56,42 @@ class AIAgentTests(TestCase):
         response = self.client.post(url, {"pergunta": ""})
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
+
+    def test_chat_endpoint_returns_placeholder_response(self):
+        self.client.login(username="tec", password="pass")
+        url = reverse("ai_agent:chat")
+
+        with mock.patch("ai_agent.views.generate_assistant_chat_response") as mocked:
+            mocked.return_value = "Resposta placeholder"
+            response = self.client.post(
+                url,
+                data='{"message": "Resumo desta semana"}',
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["response"], "Resposta placeholder")
+
+    def test_chat_endpoint_rejects_non_tecnico(self):
+        self.client.login(username="prof", password="pass")
+        url = reverse("ai_agent:chat")
+        response = self.client.post(
+            url,
+            data='{"message": "Resumo desta semana"}',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
+
+    def test_chat_endpoint_requires_message(self):
+        self.client.login(username="tec", password="pass")
+        url = reverse("ai_agent:chat")
+        response = self.client.post(
+            url,
+            data='{"message": ""}',
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())

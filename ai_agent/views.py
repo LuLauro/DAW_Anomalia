@@ -1,10 +1,12 @@
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 
 from anomalias.models import Anomalia
-from .services import AIAgentService
+from .services import AIAgentService, generate_assistant_chat_response
 
 
 def _is_tecnico(user):
@@ -30,6 +32,24 @@ def perguntar(request):
     service = AIAgentService()
     resposta = service.analyze(pergunta, list(anomalias))
     return JsonResponse(resposta, safe=True)
+
+
+@login_required
+@require_POST
+def chat(request):
+    if not _is_tecnico(request.user):
+        return JsonResponse({"error": "Não autorizado."}, status=403)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Pedido inválido."}, status=400)
+
+    message = (payload.get("message") or "").strip()
+    if not message:
+        return JsonResponse({"error": "A mensagem é obrigatória."}, status=400)
+
+    return JsonResponse({"response": generate_assistant_chat_response(message)})
 
 
 @login_required

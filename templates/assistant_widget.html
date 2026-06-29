@@ -1,0 +1,90 @@
+<div
+    class="assistant-widget"
+    data-assistant-widget
+    data-assistant-enabled-groups="Tecnico"
+    data-assistant-chat-url="{% url 'ai_agent:chat' %}"
+    data-assistant-session-key="{{ request.session.session_key|default:'' }}"
+    data-assistant-user-id="{{ request.user.id }}"
+>
+    <button
+        type="button"
+        class="assistant-launcher"
+        data-assistant-launcher
+        aria-label="Abrir Assistente IA"
+        aria-controls="assistant-panel"
+        aria-expanded="false"
+    >
+        <i class="fas fa-robot" aria-hidden="true"></i>
+    </button>
+
+    <section
+        id="assistant-panel"
+        class="assistant-panel"
+        data-assistant-panel
+        aria-hidden="true"
+    >
+        <header class="assistant-header">
+            <div class="assistant-header-copy">
+                <h2 class="assistant-title">
+                    <span aria-hidden="true">&#129302;</span>
+                    Assistente IA
+                </h2>
+                <p class="assistant-subtitle">Assistente Tecnico</p>
+            </div>
+
+            <div class="assistant-header-actions">
+                <button
+                    type="button"
+                    class="assistant-header-btn assistant-header-btn-reset"
+                    data-assistant-reset
+                    aria-label="Nova conversa"
+                    title="Nova conversa"
+                >
+                    <i class="fas fa-rotate-left" aria-hidden="true"></i>
+                </button>
+                <button
+                    type="button"
+                    class="assistant-header-btn"
+                    data-assistant-minimize
+                    aria-label="Minimizar assistente"
+                >
+                    <i class="fas fa-minus" aria-hidden="true"></i>
+                </button>
+                <button
+                    type="button"
+                    class="assistant-header-btn"
+                    data-assistant-close
+                    aria-label="Fechar assistente"
+                >
+                    <i class="fas fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="assistant-body">
+            <div class="assistant-messages" data-assistant-messages></div>
+
+            <div class="assistant-suggestions">
+                <button type="button" class="assistant-chip" data-assistant-suggestion="Quantas anomalias existem?">Quantas anomalias existem?</button>
+                <button type="button" class="assistant-chip" data-assistant-suggestion="Quais estão pendentes?">Quais estão pendentes?</button>
+                <button type="button" class="assistant-chip" data-assistant-suggestion="Sala com mais ocorrências">Sala com mais ocorrências</button>
+                <button type="button" class="assistant-chip" data-assistant-suggestion="Resumo desta semana">Resumo desta semana</button>
+            </div>
+        </div>
+
+        <form class="assistant-inputbar" data-assistant-form>
+            <label class="visually-hidden" for="assistant-message-input">Mensagem para o assistente</label>
+            <textarea
+                id="assistant-message-input"
+                class="assistant-input"
+                data-assistant-input
+                placeholder="Escreva uma pergunta..."
+                rows="1"
+                autocomplete="off"
+            ></textarea>
+            <button type="submit" class="assistant-send" aria-label="Enviar mensagem">
+                <i class="fas fa-paper-plane" aria-hidden="true"></i>
+            </button>
+        </form>
+    </section>
+</div>

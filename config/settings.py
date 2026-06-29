@@ -128,6 +128,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+GEMINI_API_KEY = config("GEMINI_API_KEY")
+
 # Security settings (ative apenas em produção)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
