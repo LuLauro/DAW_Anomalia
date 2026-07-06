@@ -47,6 +47,13 @@
         .muted {
             color: #666;
         }
+        .priority-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +80,7 @@
             <tr>
                 <th>Título</th>
                 <th>Estado</th>
+                <th>Prioridade</th>
                 <th>Sala</th>
                 <th>Computador</th>
                 {% if mostrar_reportado_por %}
@@ -87,6 +95,14 @@
             <tr>
                 <td>{{ anomalia.titulo }}</td>
                 <td>{{ anomalia.get_estado_display }}</td>
+                <td>
+                    <span
+                        class="priority-badge"
+                        style="background-color: {{ anomalia.priority_style.bg }}; color: {{ anomalia.priority_style.fg }};"
+                    >
+                        {{ anomalia.get_prioridade_display }}
+                    </span>
+                </td>
                 <td>
                     {% if anomalia.computador %}
                         {{ anomalia.computador.sala.numero }}
@@ -117,7 +133,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7">Sem anomalias no período.</td>
+                <td colspan="{% if mostrar_reportado_por %}8{% else %}7{% endif %}">Sem anomalias no período.</td>
             </tr>
             {% endfor %}
         </tbody>

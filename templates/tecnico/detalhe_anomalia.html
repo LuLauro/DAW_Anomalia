@@ -21,6 +21,7 @@
             </div>
             <div class="card-body">
                 <p class="mb-2"><strong>Estado:</strong> {{ anomalia.get_estado_display }}</p>
+                <p class="mb-2"><strong>Prioridade:</strong> {% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</p>
                 <p class="mb-2"><strong>Tipo:</strong> {{ anomalia.get_tipo_display|default:"-" }}</p>
                 <p class="mb-2"><strong>Data de registo:</strong> {{ anomalia.data_registo|date:"d/m/Y H:i" }}</p>
                 <p class="mb-2"><strong>Reportado por:</strong> {{ anomalia.reportado_por.username }}</p>

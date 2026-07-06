@@ -17,6 +17,15 @@ def _require_tecnico(request):
     return _has_tecnico_access(request.user)
 
 
+def _prioridade_counts(queryset):
+    return {
+        "total_criticas": queryset.filter(prioridade="CRITICA").count(),
+        "total_altas": queryset.filter(prioridade="ALTA").count(),
+        "total_medias": queryset.filter(prioridade="MEDIA").count(),
+        "total_baixas": queryset.filter(prioridade="BAIXA").count(),
+    }
+
+
 @login_required
 @group_required(
     _has_tecnico_access,
@@ -26,16 +35,18 @@ def _require_tecnico(request):
 def dashboard(request):
     anomalias_abertas = (
         Anomalia.objects.filter(ativo=True, estado__in=["PENDENTE", "EM_RESOLUCAO"])
-        .select_related("computador", "sala")
+        .select_related("computador", "sala", "computador__sala")
         .order_by("-data_registo")
     )
     total_resolvidas = Anomalia.objects.filter(estado="RESOLVIDO").count()
+    prioridade_counts = _prioridade_counts(Anomalia.objects.filter(ativo=True))
 
     context = {
         "total_pendentes": anomalias_abertas.filter(estado="PENDENTE").count(),
         "total_em_resolucao": anomalias_abertas.filter(estado="EM_RESOLUCAO").count(),
         "total_resolvidas": total_resolvidas,
         "anomalias_recentes": anomalias_abertas[:10],
+        **prioridade_counts,
     }
     return render(request, "tecnico/dashboard.html", context)
 
@@ -47,7 +58,7 @@ def lista_anomalias(request):
 
     anomalias = (
         Anomalia.objects.filter(ativo=True, estado__in=["PENDENTE", "EM_RESOLUCAO"])
-        .select_related("computador", "sala")
+        .select_related("computador", "sala", "computador__sala")
         .annotate(
             sala_ordenacao=Coalesce("sala__numero", "computador__sala__numero")
         )
@@ -63,7 +74,7 @@ def historico_anomalias(request):
 
     anomalias = (
         Anomalia.objects.filter(data_resolvida__isnull=False)
-        .select_related("computador", "sala")
+        .select_related("computador", "sala", "computador__sala")
         .order_by("-data_resolvida", "-data_registo")
     )
     return render(request, "tecnico/historico_anomalias.html", {"anomalias": anomalias})
@@ -75,7 +86,10 @@ def detalhe_anomalia(request, pk):
         return redirect("anomalias:lista_anomalias")
 
     anomalia = get_object_or_404(
-        Anomalia.objects.select_related("computador", "sala"), pk=pk
+        Anomalia.objects.select_related(
+            "computador", "sala", "computador__sala", "reportado_por"
+        ),
+        pk=pk,
     )
     anexos = anomalia.anexos.all().order_by("-data_upload")  # type: ignore
     return render(
@@ -91,7 +105,8 @@ def atualizar_estado(request, pk):
         return redirect("anomalias:lista_anomalias")
 
     anomalia = get_object_or_404(
-        Anomalia.objects.select_related("computador", "sala"), pk=pk
+        Anomalia.objects.select_related("computador", "sala", "computador__sala"),
+        pk=pk,
     )
 
     if anomalia.estado == "RESOLVIDO":
@@ -128,7 +143,8 @@ def adicionar_observacao(request, pk):
         return redirect("anomalias:lista_anomalias")
 
     anomalia = get_object_or_404(
-        Anomalia.objects.select_related("computador", "sala"), pk=pk
+        Anomalia.objects.select_related("computador", "sala", "computador__sala"),
+        pk=pk,
     )
 
     if anomalia.estado == "RESOLVIDO":

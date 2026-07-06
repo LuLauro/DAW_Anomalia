@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -16,6 +17,7 @@ from .forms import (
     AnomaliaFilterForm,
     AnomaliaForm,
     AnomaliaGeralForm,
+    AnomaliaPrioridadeForm,
     FiltroHistoricoForm,
 )
 from .models import AnexoAnomalia, Anomalia
@@ -27,20 +29,54 @@ def lista_anomalias(request):
     anomalias = filter_anomalias_for_user(
         Anomalia.objects.filter(ativo=True)
         .select_related("computador", "sala", "computador__sala", "reportado_por")
-        .order_by("-data_registo"),
+        .annotate(
+            prioridade_ordem=Case(
+                When(prioridade="CRITICA", then=Value(0)),
+                When(prioridade="ALTA", then=Value(1)),
+                When(prioridade="MEDIA", then=Value(2)),
+                When(prioridade="BAIXA", then=Value(3)),
+                default=Value(99),
+                output_field=IntegerField(),
+            )
+        ),
         request.user,
     )
 
     form = AnomaliaFilterForm(request.GET, user=request.user)
     if form.is_valid():
+        pesquisa = (form.cleaned_data.get("pesquisa") or "").strip()
         sala = form.cleaned_data.get("sala")
         estado = form.cleaned_data.get("estado")
+        prioridade = form.cleaned_data.get("prioridade")
+        ordenacao = form.cleaned_data.get("ordenacao") or "recentes"
+        if pesquisa:
+            prioridade_map = {
+                "critica": "CRITICA",
+                "crítica": "CRITICA",
+                "alta": "ALTA",
+                "media": "MEDIA",
+                "média": "MEDIA",
+                "baixa": "BAIXA",
+            }
+            prioridade_pesquisa = prioridade_map.get(pesquisa.lower())
+            pesquisa_q = Q(titulo__icontains=pesquisa) | Q(descricao__icontains=pesquisa)
+            if prioridade_pesquisa:
+                pesquisa_q |= Q(prioridade=prioridade_pesquisa)
+            anomalias = anomalias.filter(pesquisa_q)
         if sala:
             anomalias = anomalias.filter(sala=sala) | anomalias.filter(
                 computador__sala=sala
             )
         if estado:
             anomalias = anomalias.filter(estado=estado)
+        if prioridade:
+            anomalias = anomalias.filter(prioridade=prioridade)
+        if ordenacao == "prioridade":
+            anomalias = anomalias.order_by("prioridade_ordem", "-data_registo")
+        else:
+            anomalias = anomalias.order_by("-data_registo")
+    else:
+        anomalias = anomalias.order_by("-data_registo")
 
     context = {
         "anomalias": anomalias,
@@ -57,6 +93,7 @@ def registar_anomalia(request):
         if form.is_valid():
             anomalia = form.save(commit=False)
             anomalia.reportado_por = request.user
+            anomalia.full_clean()
             anomalia.save()
             _criar_anexos(
                 anomalia,
@@ -67,10 +104,10 @@ def registar_anomalia(request):
             mensagem = f"""
 Foi registada uma nova anomalia.
 
-TÃ­tulo: {anomalia.titulo}
+TÃƒÂ­tulo: {anomalia.titulo}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
-DescriÃ§Ã£o: {anomalia.descricao}
+DescriÃƒÂ§ÃƒÂ£o: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Criada", mensagem)
@@ -92,7 +129,7 @@ def atualizar_estado(request, pk):
     )
 
     if request.user.groups.filter(name="Coordenador").exists():
-        messages.warning(request, "Coordenadores nÃ£o podem alterar o estado.")
+        messages.warning(request, "Coordenadores nÃƒÂ£o podem alterar o estado.")
         return redirect("anomalias:lista_anomalias")
 
     if (
@@ -100,7 +137,7 @@ def atualizar_estado(request, pk):
         and anomalia.reportado_por != request.user
     ):
         messages.warning(
-            request, "Professores sÃ³ podem alterar o estado das suas prÃ³prias anomalias."
+            request, "Professores sÃƒÂ³ podem alterar o estado das suas prÃƒÂ³prias anomalias."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -116,7 +153,7 @@ def atualizar_estado(request, pk):
             mensagem = f"""
 O estado de uma anomalia foi atualizado.
 
-TÃ­tulo: {anomalia.titulo}
+TÃƒÂ­tulo: {anomalia.titulo}
 Novo estado: {anomalia.estado}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
@@ -128,6 +165,37 @@ Alterado por: {request.user.get_full_name()} ({request.user.email})
 
 
 @login_required
+def atualizar_prioridade(request, pk):
+    anomalia = get_object_or_404(
+        filter_anomalias_for_user(
+            Anomalia.objects.select_related("computador", "sala"),
+            request.user,
+        ),
+        pk=pk,
+    )
+
+    if anomalia.estado == "RESOLVIDO":
+        messages.warning(
+            request, "A prioridade não pode ser alterada depois da resolução."
+        )
+        return redirect("anomalias:detalhe_anomalia", pk=pk)
+
+    if request.method != "POST":
+        return redirect("anomalias:detalhe_anomalia", pk=pk)
+
+    form = AnomaliaPrioridadeForm(request.POST, instance=anomalia)
+    if form.is_valid():
+        anomalia = form.save(commit=False)
+        anomalia.full_clean()
+        anomalia.save(update_fields=["prioridade"])
+        messages.success(request, "Prioridade atualizada com sucesso.")
+    else:
+        messages.error(request, "Não foi possível atualizar a prioridade.")
+
+    return redirect("anomalias:detalhe_anomalia", pk=pk)
+
+
+@login_required
 def adicionar_observacao(request, pk):
     anomalia = get_object_or_404(
         filter_anomalias_for_user(Anomalia.objects.all(), request.user),
@@ -136,7 +204,7 @@ def adicionar_observacao(request, pk):
 
     if not can_add_observacao(request.user, anomalia):
         messages.warning(
-            request, "VocÃª nÃ£o tem permissÃ£o para adicionar observaÃ§Ãµes."
+            request, "VocÃƒÂª nÃƒÂ£o tem permissÃƒÂ£o para adicionar observaÃƒÂ§ÃƒÂµes."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -168,11 +236,18 @@ def detalhe_anomalia(request, pk):
     )
 
     anexos = anomalia.anexos.all().order_by("-data_upload")
+    prioridade_form = None
+    if anomalia.estado != "RESOLVIDO":
+        prioridade_form = AnomaliaPrioridadeForm(instance=anomalia)
 
     return render(
         request,
         "anomalias/detalhe_anomalia.html",
-        {"anomalia": anomalia, "anexos": anexos},
+        {
+            "anomalia": anomalia,
+            "anexos": anexos,
+            "prioridade_form": prioridade_form,
+        },
     )
 
 
@@ -245,6 +320,7 @@ def registar_anomalia_geral(request):
         if form.is_valid():
             anomalia = form.save(commit=False)
             anomalia.reportado_por = request.user
+            anomalia.full_clean()
             anomalia.save()
             _criar_anexos(
                 anomalia,
@@ -255,8 +331,8 @@ def registar_anomalia_geral(request):
             mensagem = f"""
 Foi registada uma nova anomalia geral.
 
-TÃ­tulo: {anomalia.titulo}
-DescriÃ§Ã£o: {anomalia.descricao}
+TÃƒÂ­tulo: {anomalia.titulo}
+DescriÃƒÂ§ÃƒÂ£o: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Geral Criada", mensagem)

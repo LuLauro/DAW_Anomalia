@@ -19,6 +19,7 @@
             <thead>
                 <tr>
                     <th>Título</th>
+                    <th>Prioridade</th>
                     <th>Sala</th>
                     <th>Computador</th>
                     <th>Data de registo</th>
@@ -30,6 +31,7 @@
                 {% for anomalia in anomalias %}
                 <tr>
                     <td>{{ anomalia.titulo }}</td>
+                    <td>{% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</td>
                     <td>
                         {% if anomalia.computador %}
                             {{ anomalia.computador.sala.numero }}
@@ -60,7 +62,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">Sem anomalias resolvidas.</td>
+                    <td colspan="7" class="text-center">Sem anomalias resolvidas.</td>
                 </tr>
                 {% endfor %}
             </tbody>

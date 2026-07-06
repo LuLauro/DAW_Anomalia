@@ -51,6 +51,15 @@
                 </select>
             </div>
             <div class="col-md-4">
+                <label for="prioridade" class="form-label">Prioridade</label>
+                <select id="prioridade" name="prioridade" class="form-select">
+                    <option value="">Todas</option>
+                    {% for valor, rotulo in prioridade_choices %}
+                    <option value="{{ valor }}">{{ rotulo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label for="tipo" class="form-label">Tipo</label>
                 <select id="tipo" name="tipo" class="form-select">
                     <option value="">Todos</option>

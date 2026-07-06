@@ -66,13 +66,23 @@ def _validar_arquivos(arquivos, extensoes_permitidas, tamanho_maximo):
 
 
 class AnomaliaForm(forms.ModelForm):
+    prioridade = forms.ChoiceField(
+        choices=Anomalia.PRIORIDADE_CHOICES,
+        initial="MEDIA",
+        label="Prioridade",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.order_by("numero"),
         required=False,
         label="Sala",
         empty_label="",
         widget=SearchableSelect(
-            attrs={**BASE_WIDGETS, "class": "form-select js-room-select", "data-tom-select": "room"}
+            attrs={
+                **BASE_WIDGETS,
+                "class": "form-select js-room-select",
+                "data-tom-select": "room",
+            }
         ),
     )
     imagens = MultipleFileField(
@@ -87,12 +97,12 @@ class AnomaliaForm(forms.ModelForm):
         allowed_exts={"mp4"},
         max_size=MAX_VIDEO_SIZE,
         widget=MultipleFileInput(attrs={"accept": "video/mp4"}),
-        label="Videos (opcional)",
+        label="Vídeos (opcional)",
     )
 
     class Meta:
         model = Anomalia
-        fields = ["titulo", "descricao", "sala", "computador"]
+        fields = ["titulo", "descricao", "prioridade", "sala", "computador"]
         widgets = {
             "titulo": forms.TextInput(attrs=BASE_WIDGETS),
             "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),
@@ -147,7 +157,10 @@ class AnomaliaForm(forms.ModelForm):
         computador = cleaned_data.get("computador")
 
         if computador and sala and computador.sala_id != sala.id:
-            self.add_error("computador", "O computador selecionado não pertence à sala escolhida.")
+            self.add_error(
+                "computador",
+                "O computador selecionado não pertence à sala escolhida.",
+            )
 
         if computador and not sala:
             cleaned_data["sala"] = computador.sala
@@ -164,13 +177,23 @@ class AnomaliaForm(forms.ModelForm):
 
 
 class AnomaliaGeralForm(forms.ModelForm):
+    prioridade = forms.ChoiceField(
+        choices=Anomalia.PRIORIDADE_CHOICES,
+        initial="MEDIA",
+        label="Prioridade",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.order_by("numero"),
         required=False,
         label="Sala",
         empty_label="",
         widget=SearchableSelect(
-            attrs={**BASE_WIDGETS, "class": "form-select js-room-select", "data-tom-select": "room"}
+            attrs={
+                **BASE_WIDGETS,
+                "class": "form-select js-room-select",
+                "data-tom-select": "room",
+            }
         ),
     )
     imagens = MultipleFileField(
@@ -185,12 +208,12 @@ class AnomaliaGeralForm(forms.ModelForm):
         allowed_exts={"mp4"},
         max_size=MAX_VIDEO_SIZE,
         widget=MultipleFileInput(attrs={"accept": "video/mp4"}),
-        label="Videos (opcional)",
+        label="Vídeos (opcional)",
     )
 
     class Meta:
         model = Anomalia
-        fields = ["titulo", "descricao", "sala", "tipo"]
+        fields = ["titulo", "descricao", "prioridade", "sala", "tipo"]
         widgets = {
             "titulo": forms.TextInput(attrs=BASE_WIDGETS),
             "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),
@@ -223,13 +246,63 @@ class AnomaliaFilterForm(forms.Form):
         queryset=Sala.objects.all(),
         required=False,
         empty_label="Todas as Salas",
+        label="Sala",
         widget=forms.Select(attrs=BASE_WIDGETS),
+    )
+    pesquisa = forms.CharField(
+        required=False,
+        label="Pesquisar",
+        widget=forms.TextInput(
+            attrs={**BASE_WIDGETS, "placeholder": "Título, descrição ou prioridade"}
+        ),
     )
     estado = forms.ChoiceField(
         choices=[("", "Todos os Estados")] + Anomalia.ESTADO_CHOICES,
         required=False,
+        label="Estado",
         widget=forms.Select(attrs=BASE_WIDGETS),
     )
+    prioridade = forms.ChoiceField(
+        choices=[("", "Todas as Prioridades")] + Anomalia.PRIORIDADE_CHOICES,
+        required=False,
+        label="Prioridade",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
+    ordenacao = forms.ChoiceField(
+        choices=[
+            ("recentes", "Mais recentes"),
+            ("prioridade", "Prioridade"),
+        ],
+        required=False,
+        initial="recentes",
+        label="Ordenar por",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
+
+
+class AnomaliaPrioridadeForm(forms.ModelForm):
+    prioridade = forms.ChoiceField(
+        choices=Anomalia.PRIORIDADE_CHOICES,
+        label="Prioridade",
+        widget=forms.Select(attrs=BASE_WIDGETS),
+    )
+
+    class Meta:
+        model = Anomalia
+        fields = ["prioridade"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if getattr(self.instance, "estado", None) == "RESOLVIDO":
+            self.fields["prioridade"].disabled = True
+
+    def clean_prioridade(self):
+        prioridade = self.cleaned_data.get("prioridade")
+        if self.instance.pk and self.instance.estado == "RESOLVIDO":
+            return self.instance.prioridade
+        if not prioridade:
+            raise forms.ValidationError("A prioridade é obrigatória.")
+        return prioridade
 
 
 class ObservacaoForm(forms.ModelForm):
@@ -238,7 +311,11 @@ class ObservacaoForm(forms.ModelForm):
         fields = ["observacoes"]
         widgets = {
             "observacoes": forms.Textarea(
-                attrs={**BASE_WIDGETS, "rows": 4, "placeholder": "Escreva sua observação aqui..."}
+                attrs={
+                    **BASE_WIDGETS,
+                    "rows": 4,
+                    "placeholder": "Escreva a sua observação aqui...",
+                }
             ),
         }
 

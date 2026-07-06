@@ -118,3 +118,111 @@ class CoordinatorAccessRestrictionTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"computadores": []})
+
+
+class PriorityTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="prof",
+            password="secret123",
+        )
+        self.sala = Sala.objects.create(numero="A1.1")
+        self.computador = Computador.objects.create(
+            numero_identificacao="PC-10",
+            sala=self.sala,
+            marca="Dell",
+            modelo="Optiplex",
+        )
+        self.client.force_login(self.user)
+
+    def test_priority_defaults_to_media(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Sem prioridade explícita",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+        )
+
+        self.assertEqual(anomalia.prioridade, "MEDIA")
+
+    def test_filter_by_priority(self):
+        alta = Anomalia.objects.create(
+            titulo="Alta",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="ALTA",
+        )
+        Anomalia.objects.create(
+            titulo="Baixa",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="BAIXA",
+        )
+
+        response = self.client.get(
+            reverse("anomalias:lista_anomalias"),
+            {"prioridade": "ALTA"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context["anomalias"],
+            [alta],
+            transform=lambda anomalia: anomalia,
+        )
+
+    def test_order_by_priority(self):
+        critica = Anomalia.objects.create(
+            titulo="Crítica",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="CRITICA",
+        )
+        alta = Anomalia.objects.create(
+            titulo="Alta",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="ALTA",
+        )
+        media = Anomalia.objects.create(
+            titulo="Média",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="MEDIA",
+        )
+
+        response = self.client.get(
+            reverse("anomalias:lista_anomalias"),
+            {"ordenacao": "prioridade"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["anomalias"][:3]),
+            [critica, alta, media],
+        )
+
+    def test_cannot_change_priority_after_resolution(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Resolvida",
+            descricao="Teste",
+            computador=self.computador,
+            reportado_por=self.user,
+            prioridade="MEDIA",
+            estado="RESOLVIDO",
+        )
+
+        response = self.client.post(
+            reverse("anomalias:atualizar_prioridade", args=[anomalia.pk]),
+            {"prioridade": "CRITICA"},
+            follow=True,
+        )
+
+        anomalia.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(anomalia.prioridade, "MEDIA")

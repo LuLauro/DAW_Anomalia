@@ -18,6 +18,15 @@ from users.access import (
 from users.permissions import is_admin, is_coordenador
 
 
+def _prioridade_counts(queryset):
+    return {
+        "total_criticas": queryset.filter(prioridade="CRITICA").count(),
+        "total_altas": queryset.filter(prioridade="ALTA").count(),
+        "total_medias": queryset.filter(prioridade="MEDIA").count(),
+        "total_baixas": queryset.filter(prioridade="BAIXA").count(),
+    }
+
+
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
@@ -37,6 +46,7 @@ def dashboard(request):
     anomalias_recentes = Anomalia.objects.filter(
         data_registo__gte=data_limite
     ).order_by('-data_registo')[:5]
+    prioridade_counts = _prioridade_counts(Anomalia.objects.filter(ativo=True))
 
     salas_problematicas = Sala.objects.annotate(
         num_anomalias_computador=Count(
@@ -77,6 +87,7 @@ def dashboard(request):
         'dados_estado_labels': list(estados.values()),
         'dados_estado_valores': list(dados_estado.values()),
         'dados_estado_cores': ["#ff5858", "#68c2ff", "#7affb2"],
+        **prioridade_counts,
     }
 
     return render(request, 'dashboard/index.html', context)
@@ -127,6 +138,7 @@ def coordinator_dashboard(request):
     )
 
     anomalias_recentes = anomalias.order_by("-data_registo")[:5]
+    prioridade_counts = _prioridade_counts(anomalias)
 
     context = {
         "total_salas": salas.count(),
@@ -142,6 +154,7 @@ def coordinator_dashboard(request):
         "estado_chart_colors": ["#ffc107", "#17a2b8", "#28a745"],
         "salas_chart_labels": [sala.numero for sala in anomalias_por_sala],
         "salas_chart_values": [sala.num_anomalias for sala in anomalias_por_sala],
+        **prioridade_counts,
     }
     return render(request, "dashboard/coordinator.html", context)
 

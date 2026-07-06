@@ -33,6 +33,26 @@ def get_resolvidas():
     ).count()
 
 
+def get_criticas():
+    """Total de anomalias críticas."""
+    return Anomalia.objects.filter(ativo=True, prioridade="CRITICA").count()
+
+
+def get_altas():
+    """Total de anomalias altas."""
+    return Anomalia.objects.filter(ativo=True, prioridade="ALTA").count()
+
+
+def get_medias():
+    """Total de anomalias médias."""
+    return Anomalia.objects.filter(ativo=True, prioridade="MEDIA").count()
+
+
+def get_baixas():
+    """Total de anomalias baixas."""
+    return Anomalia.objects.filter(ativo=True, prioridade="BAIXA").count()
+
+
 def get_anomalia_mais_antiga():
     """Anomalia mais antiga ainda ativa."""
 

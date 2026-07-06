@@ -67,6 +67,22 @@ def _anomalia_relatorio_filtro_base():
     return Q(ativo=True) | Q(estado="RESOLVIDO", data_resolvida__isnull=False)
 
 
+def _priority_style(prioridade):
+    return {
+        "CRITICA": {"bg": "#dc3545", "fg": "#ffffff", "label": "Crítica"},
+        "ALTA": {"bg": "#fd7e14", "fg": "#ffffff", "label": "Alta"},
+        "MEDIA": {"bg": "#ffc107", "fg": "#212529", "label": "Média"},
+        "BAIXA": {"bg": "#198754", "fg": "#ffffff", "label": "Baixa"},
+    }.get(prioridade, {"bg": "#6c757d", "fg": "#ffffff", "label": prioridade or "-"})
+
+
+def _attach_priority_style(anomalias):
+    anomalias = list(anomalias)
+    for anomalia in anomalias:
+        anomalia.priority_style = _priority_style(anomalia.prioridade)
+    return anomalias
+
+
 def grafico_estado_base64(resolvidas, pendentes, em_resolucao):
     labels = ["Resolvidas", "Pendentes", "Em resolução"]
     valores = [resolvidas, pendentes, em_resolucao]
@@ -142,6 +158,7 @@ def relatorio_form(request):
     context = {
         "salas": salas,
         "estado_choices": Anomalia.ESTADO_CHOICES,
+        "prioridade_choices": Anomalia.PRIORIDADE_CHOICES,
         "tipo_choices": Anomalia._meta.get_field("tipo").choices,
     }
     return render(request, "relatorios/relatorio_form.html", context)
@@ -174,6 +191,10 @@ def gerar_relatorio_pdf(request):
     if estado:
         filtros &= Q(estado=estado)
 
+    prioridade = request.GET.get("prioridade")
+    if prioridade:
+        filtros &= Q(prioridade=prioridade)
+
     tipo = request.GET.get("tipo")
     if tipo:
         filtros &= Q(tipo=tipo)
@@ -189,6 +210,7 @@ def gerar_relatorio_pdf(request):
     total_resolvidas = anomalias.filter(estado="RESOLVIDO").count()
     total_pendentes = anomalias.filter(estado="PENDENTE").count()
     tempo_medio = _tempo_medio_resolucao(anomalias)
+    anomalias = _attach_priority_style(anomalias)
 
     is_coordenador = request.user.groups.filter(name="Coordenador").exists()
     context = {
@@ -244,6 +266,10 @@ def relatorio_semanal_pdf(request):
     total_pendentes = anomalias.filter(estado="PENDENTE").count()
     total_em_resolucao = anomalias.filter(estado="EM_RESOLUCAO").count()
     tempo_medio = _tempo_medio_resolucao(anomalias)
+    anomalias_pendentes = _attach_priority_style(
+        anomalias.filter(estado__in=["PENDENTE", "EM_RESOLUCAO"])
+    )
+    anomalias = _attach_priority_style(anomalias)
 
     por_estado = (
         anomalias.values("estado")
@@ -278,9 +304,7 @@ def relatorio_semanal_pdf(request):
         "percent_resolvidas": _percent(total_resolvidas, total_anomalias),
         "percent_pendentes": _percent(total_pendentes, total_anomalias),
         "anomalias": anomalias,
-        "anomalias_pendentes": anomalias.filter(
-            estado__in=["PENDENTE", "EM_RESOLUCAO"]
-        ),
+        "anomalias_pendentes": anomalias_pendentes,
         "por_estado": por_estado,
         "top_salas": top_salas,
         "top_tipos": top_tipos,
