@@ -95,7 +95,7 @@ def atualizar_estado(request, pk):
     )
 
     if anomalia.estado == "RESOLVIDO":
-        messages.warning(request, "Nao e possivel alterar anomalias resolvidas.")
+        messages.warning(request, "Não é possível alterar anomalias resolvidas.")
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
     if request.method != "POST":
@@ -109,7 +109,7 @@ def atualizar_estado(request, pk):
     estado_pedido = request.POST.get("estado")
 
     if not proximo_estado or estado_pedido != proximo_estado:
-        messages.error(request, "Transicao de estado invalida.")
+        messages.error(request, "Transição de estado inválida.")
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
     if estado_pedido == "RESOLVIDO":
@@ -132,7 +132,7 @@ def adicionar_observacao(request, pk):
     )
 
     if anomalia.estado == "RESOLVIDO":
-        messages.warning(request, "Nao e possivel alterar anomalias resolvidas.")
+        messages.warning(request, "Não é possível alterar anomalias resolvidas.")
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
     if request.method != "POST":
@@ -140,9 +140,9 @@ def adicionar_observacao(request, pk):
 
     observacao = (request.POST.get("observacao") or "").strip()
     if not observacao:
-        messages.error(request, "A observacao nao pode estar vazia.")
+        messages.error(request, "A observação não pode estar vazia.")
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
     anomalia.adicionar_observacao(observacao)
-    messages.success(request, "Observacao adicionada com sucesso.")
+    messages.success(request, "Observação adicionada com sucesso.")
     return redirect("tecnico:detalhe_anomalia", pk=pk)

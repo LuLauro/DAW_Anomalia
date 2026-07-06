@@ -63,6 +63,7 @@ def chat(request):
     )
     return JsonResponse(resposta)
 
+
 @login_required
 def agente_ui(request):
     if not _is_tecnico(request.user):

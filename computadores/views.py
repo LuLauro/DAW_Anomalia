@@ -4,8 +4,17 @@ from django.contrib import messages
 from .models import Computador
 from .forms import ComputadorForm, FiltroComputadorForm
 from users.access import filter_computadores_for_user
+from users.permissions import can_access_computadores, group_required
+
+_COMPUTADORES_ACCESS_DENIED = "Não tem permissão para aceder ao módulo Computadores."
+
 
 @login_required
+@group_required(
+    can_access_computadores,
+    error_message=_COMPUTADORES_ACCESS_DENIED,
+    redirect_to="anomalias:lista_anomalias",
+)
 def lista_computadores(request):
     form = FiltroComputadorForm(request.GET or None, user=request.user)
     computadores = filter_computadores_for_user(
@@ -22,7 +31,13 @@ def lista_computadores(request):
         'form': form
     })
 
+
 @login_required
+@group_required(
+    can_access_computadores,
+    error_message=_COMPUTADORES_ACCESS_DENIED,
+    redirect_to="anomalias:lista_anomalias",
+)
 def registar_computador(request):
     if request.method == 'POST':
         form = ComputadorForm(request.POST, user=request.user)
@@ -38,7 +53,13 @@ def registar_computador(request):
         form = ComputadorForm(initial=initial_data, user=request.user)
     return render(request, 'computadores/registar_computador.html', {'form': form})
 
+
 @login_required
+@group_required(
+    can_access_computadores,
+    error_message=_COMPUTADORES_ACCESS_DENIED,
+    redirect_to="anomalias:lista_anomalias",
+)
 def detalhe_computador(request, pk):
     computador = get_object_or_404(
         filter_computadores_for_user(Computador.objects.all(), request.user),

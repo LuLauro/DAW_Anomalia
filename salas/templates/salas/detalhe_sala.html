@@ -23,7 +23,7 @@
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">Computadores</h5>
-            {% if user.is_staff %}
+            {% if user|can_access_computadores and user.is_staff %}
             <a href="{% url 'computadores:registar_computador' %}?sala={{ sala.pk }}" class="btn btn-primary">Adicionar Computador</a>
             {% endif %}
         </div>
@@ -47,7 +47,9 @@
                                 <td>{{ computador.marca }}</td>
                                 <td>{{ computador.modelo }}</td>
                                 <td>
+                                    {% if user|can_access_computadores %}
                                     <a href="{% url 'computadores:detalhe_computador' computador.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 
 from anomalias.models import Anomalia
 from users.access import filter_anomalias_for_user
@@ -50,5 +49,5 @@ def mark_as_read(request, notification_id):
 @login_required
 def mark_all_as_read(request):
     _notifications_for_user(request.user).filter(is_read=False).update(is_read=True)
-    messages.success(request, "Todas as notificacoes foram marcadas como lidas.")
+    messages.success(request, "Todas as notificações foram marcadas como lidas.")
     return redirect("notificacoes:list")

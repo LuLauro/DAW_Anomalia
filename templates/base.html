@@ -54,10 +54,12 @@
                         <span>Salas</span>
                     </a>
 
+                    {% if user|can_access_computadores %}
                     <a class="sidebar-link {% if request.resolver_match.namespace == 'computadores' %}is-active{% endif %}" href="{% url 'computadores:lista_computadores' %}">
                         <i class="fas fa-desktop"></i>
                         <span>Computadores</span>
                     </a>
+                    {% endif %}
 
                     <a class="sidebar-link {% if request.resolver_match.namespace == 'anomalias' and request.resolver_match.url_name == 'historico_anomalias' %}is-active{% endif %}" href="{% url 'anomalias:historico_anomalias' %}">
                         <i class="fas fa-clock-rotate-left"></i>
@@ -116,7 +118,7 @@
                                     <form method="post" action="{% url 'users:logout' %}" data-assistant-logout-form>
                                         {% csrf_token %}
                                         <button class="dropdown-item" type="submit">
-                                            <i class="fas fa-right-from-bracket me-2"></i>Logout
+                                            <i class="fas fa-right-from-bracket me-2"></i>Terminar sessão
                                         </button>
                                     </form>
                                 </li>
@@ -126,7 +128,7 @@
                         <form method="post" action="{% url 'users:logout' %}" class="header-logout d-none d-sm-block" data-assistant-logout-form>
                             {% csrf_token %}
                             <button class="btn btn-danger" type="submit">
-                                <i class="fas fa-right-from-bracket me-2"></i>Logout
+                                <i class="fas fa-right-from-bracket me-2"></i>Terminar sessão
                             </button>
                         </form>
                     </div>

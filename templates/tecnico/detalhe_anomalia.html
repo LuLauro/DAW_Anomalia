@@ -22,10 +22,10 @@
             <div class="card-body">
                 <p class="mb-2"><strong>Estado:</strong> {{ anomalia.get_estado_display }}</p>
                 <p class="mb-2"><strong>Tipo:</strong> {{ anomalia.get_tipo_display|default:"-" }}</p>
-                <p class="mb-2"><strong>Data registo:</strong> {{ anomalia.data_registo|date:"d/m/Y H:i" }}</p>
+                <p class="mb-2"><strong>Data de registo:</strong> {{ anomalia.data_registo|date:"d/m/Y H:i" }}</p>
                 <p class="mb-2"><strong>Reportado por:</strong> {{ anomalia.reportado_por.username }}</p>
                 {% if anomalia.data_resolvida %}
-                <p class="mb-2"><strong>Data resolvida:</strong> {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
+                <p class="mb-2"><strong>Data de resolução:</strong> {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
                 {% endif %}
                 <p class="mb-0"><strong>Descrição:</strong><br>{{ anomalia.descricao }}</p>
             </div>
@@ -41,7 +41,7 @@
                     {% for anexo in anexos %}
                         {% if anexo.tipo == "IMAGEM" %}
                         <div class="col-md-4">
-                            <img src="{% url 'anomalias:ver_anexo' anexo.pk %}" alt="Imagem anexo" class="img-fluid rounded">
+                            <img src="{% url 'anomalias:ver_anexo' anexo.pk %}" alt="Imagem do anexo" class="img-fluid rounded">
                         </div>
                         {% elif anexo.tipo == "VIDEO" %}
                         <div class="col-md-6">
@@ -100,43 +100,43 @@
                 <form method="post" action="{% url 'tecnico:atualizar_estado' anomalia.pk %}">
                     {% csrf_token %}
                     <input type="hidden" name="estado" value="EM_RESOLUCAO">
-                    <button type="submit" class="btn btn-warning w-100">Marcar em resolucao</button>
+                    <button type="submit" class="btn btn-warning w-100">Marcar em resolução</button>
                 </form>
                 {% elif anomalia.estado == "EM_RESOLUCAO" %}
                 <form method="post" action="{% url 'tecnico:atualizar_estado' anomalia.pk %}">
                     {% csrf_token %}
                     <input type="hidden" name="estado" value="RESOLVIDO">
-                    <button type="submit" class="btn btn-success w-100">Marcar resolvido</button>
+                    <button type="submit" class="btn btn-success w-100">Marcar como resolvido</button>
                 </form>
                 {% else %}
-                <div class="alert alert-secondary mb-0">Anomalia resolvida. Alteracoes bloqueadas.</div>
+                <div class="alert alert-secondary mb-0">Anomalia resolvida. Alterações bloqueadas.</div>
                 {% endif %}
             </div>
         </div>
 
         <div class="card form-card">
             <div class="card-header">
-                <h5 class="mb-0">Observacoes tecnicas</h5>
+                <h5 class="mb-0">Observações técnicas</h5>
             </div>
             <div class="card-body">
                 {% if anomalia.observacoes %}
                 <div class="content-note mb-3">{{ anomalia.observacoes }}</div>
                 {% else %}
-                <p class="text-muted">Sem observacoes.</p>
+                <p class="text-muted">Sem observações.</p>
                 {% endif %}
 
                 {% if anomalia.estado != "RESOLVIDO" %}
                 <form method="post" action="{% url 'tecnico:adicionar_observacao' anomalia.pk %}">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="observacao" class="form-label">Nova observacao</label>
-                        <textarea class="form-control" id="observacao" name="observacao" rows="4" placeholder="Ex: Cabo HDMI substituido, Reinstalacao de drivers, Equipamento enviado para reparacao externa"></textarea>
-                        <div class="form-text">Registe intervencoes tecnicas de forma objetiva.</div>
+                        <label for="observacao" class="form-label">Nova observação</label>
+                        <textarea class="form-control" id="observacao" name="observacao" rows="4" placeholder="Ex.: Cabo HDMI substituído, reinstalação de drivers, equipamento enviado para reparação externa"></textarea>
+                        <div class="form-text">Registe intervenções técnicas de forma objetiva.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Adicionar observacao</button>
+                    <button type="submit" class="btn btn-primary w-100">Adicionar observação</button>
                 </form>
                 {% else %}
-                <div class="alert alert-secondary mb-0">Nao e possivel adicionar observacoes.</div>
+                <div class="alert alert-secondary mb-0">Não é possível adicionar observações.</div>
                 {% endif %}
             </div>
         </div>

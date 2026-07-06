@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Relatorio de Anomalias</title>
+    <title>Relatório de Anomalias</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,9 +52,9 @@
 <body>
     <div class="header">
         <h1>{{ instituicao_nome }}</h1>
-        <p>Relatorio de anomalias</p>
+        <p>Relatório de anomalias</p>
         <p class="muted">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
-        <p class="muted">Periodo: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
+        <p class="muted">Período: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
     </div>
 
     <div class="summary">
@@ -63,7 +63,7 @@
                 <td><strong>Total de anomalias</strong><br>{{ total_anomalias }}</td>
                 <td><strong>Resolvidas</strong><br>{{ total_resolvidas }}</td>
                 <td><strong>Pendentes</strong><br>{{ total_pendentes }}</td>
-                <td><strong>Tempo medio de resolucao</strong><br>{{ tempo_medio_resolucao }}</td>
+                <td><strong>Tempo médio de resolução</strong><br>{{ tempo_medio_resolucao }}</td>
             </tr>
         </table>
     </div>
@@ -71,15 +71,15 @@
     <table class="list">
         <thead>
             <tr>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Estado</th>
                 <th>Sala</th>
                 <th>Computador</th>
                 {% if mostrar_reportado_por %}
                 <th>Reportado por</th>
                 {% endif %}
-                <th>Data registo</th>
-                <th>Data resolvida</th>
+                <th>Data de registo</th>
+                <th>Data de resolução</th>
             </tr>
         </thead>
         <tbody>
@@ -117,7 +117,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7">Sem anomalias no periodo.</td>
+                <td colspan="7">Sem anomalias no período.</td>
             </tr>
             {% endfor %}
         </tbody>

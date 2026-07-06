@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Relatorio Semanal</title>
+    <title>Relatório Semanal</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,9 +55,9 @@
 <body>
     <div class="header">
         <h1>{{ instituicao_nome }}</h1>
-        <p>Relatorio semanal de anomalias</p>
+        <p>Relatório semanal de anomalias</p>
         <p class="muted">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
-        <p class="muted">Periodo: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
+        <p class="muted">Período: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
     </div>
 
     {% include 'relatorios/partials/indicadores.html' %}
@@ -67,15 +67,15 @@
         <table class="list" style="margin-bottom: 12px;">
             <thead>
                 <tr>
-                    <th>Graficos</th>
+                    <th>Gráficos</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td style="text-align: center;">
-                        <img src="data:image/png;base64,{{ grafico_estado_img }}" alt="Grafico estado" style="max-width: 300px; margin-right: 8px;">
-                        <img src="data:image/png;base64,{{ grafico_top_salas_img }}" alt="Grafico top salas" style="max-width: 320px; margin-right: 8px;">
-                        <img src="data:image/png;base64,{{ grafico_top_tipos_img }}" alt="Grafico top tipos" style="max-width: 320px;">
+                        <img src="data:image/png;base64,{{ grafico_estado_img }}" alt="Gráfico por estado" style="max-width: 300px; margin-right: 8px;">
+                        <img src="data:image/png;base64,{{ grafico_top_salas_img }}" alt="Gráfico das salas com mais anomalias" style="max-width: 320px; margin-right: 8px;">
+                        <img src="data:image/png;base64,{{ grafico_top_tipos_img }}" alt="Gráfico dos tipos mais frequentes" style="max-width: 320px;">
                     </td>
                 </tr>
             </tbody>
@@ -126,14 +126,14 @@
 
     {% if is_tecnico %}
     <div class="block">
-        <h3>Lista operacional (pendentes e em resolucao)</h3>
+        <h3>Lista operacional (pendentes e em resolução)</h3>
         <table class="list">
             <thead>
                 <tr>
-                    <th>Data registo</th>
+                    <th>Data de registo</th>
                     <th>Sala</th>
                     <th>Computador</th>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>Estado</th>
                 </tr>
             </thead>
@@ -176,23 +176,23 @@
         {% elif is_coordenador %}
         <h3>Detalhe agregado (Coordenador)</h3>
         {% else %}
-        <h3>Detalhe tecnico</h3>
+        <h3>Detalhe técnico</h3>
         {% endif %}
         <table class="list">
             <thead>
                 <tr>
-                    <th>Data registo</th>
+                    <th>Data de registo</th>
                     <th>Sala</th>
                     <th>Computador</th>
-                    <th>Titulo</th>
+                    <th>Título</th>
                     <th>Estado</th>
                     {% if is_admin %}
                     <th>Reportado por</th>
                     {% endif %}
                     {% if is_tecnico %}
-                    <th>Observacoes</th>
+                    <th>Observações</th>
                     {% endif %}
-                    <th>Data resolvida</th>
+                    <th>Data de resolução</th>
                 </tr>
             </thead>
             <tbody>
@@ -233,7 +233,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8">Sem anomalias no periodo.</td>
+                    <td colspan="8">Sem anomalias no período.</td>
                 </tr>
                 {% endfor %}
             </tbody>

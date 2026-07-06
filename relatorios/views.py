@@ -39,7 +39,6 @@ def _periodo_datas(periodo, data_inicio_raw, data_fim_raw):
         if inicio > fim:
             return None, None
     else:
-        # semana_atual
         inicio = hoje - timedelta(days=hoje.weekday())
         fim = inicio + timedelta(days=6)
     return inicio, fim
@@ -69,7 +68,7 @@ def _anomalia_relatorio_filtro_base():
 
 
 def grafico_estado_base64(resolvidas, pendentes, em_resolucao):
-    labels = ["Resolvidas", "Pendentes", "Em resolucao"]
+    labels = ["Resolvidas", "Pendentes", "Em resolução"]
     valores = [resolvidas, pendentes, em_resolucao]
     cores = ["#2e7d32", "#f9a825", "#0288d1"]
 
@@ -103,7 +102,7 @@ def grafico_top_salas_base64(top_salas):
     fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=120)
     ax.bar(labels, valores, color="#546e7a")
     ax.set_title("Top salas", fontsize=11)
-    ax.set_ylabel("N de anomalias")
+    ax.set_ylabel("N.º de anomalias")
     ax.tick_params(axis="x", rotation=30)
 
     buffer = BytesIO()
@@ -123,7 +122,7 @@ def grafico_top_tipos_base64(top_tipos):
     fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=120)
     ax.bar(labels, valores, color="#8e24aa")
     ax.set_title("Top tipos", fontsize=11)
-    ax.set_ylabel("N de anomalias")
+    ax.set_ylabel("N.º de anomalias")
     ax.tick_params(axis="x", rotation=30)
 
     buffer = BytesIO()
@@ -136,7 +135,7 @@ def grafico_top_tipos_base64(top_tipos):
 @login_required
 def relatorio_form(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Tecnico.")
+        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
         return redirect("anomalias:lista_anomalias")
 
     salas = filter_salas_for_user(Sala.objects.all(), request.user).order_by("numero")
@@ -151,7 +150,7 @@ def relatorio_form(request):
 @login_required
 def gerar_relatorio_pdf(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Tecnico.")
+        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
         return redirect("anomalias:lista_anomalias")
 
     periodo = request.GET.get("periodo", "semana_atual")
@@ -160,7 +159,7 @@ def gerar_relatorio_pdf(request):
     inicio, fim = _periodo_datas(periodo, data_inicio_raw, data_fim_raw)
 
     if not inicio or not fim:
-        messages.error(request, "Intervalo de datas invalido.")
+        messages.error(request, "Intervalo de datas inválido.")
         return redirect("relatorios:form")
 
     filtros = _anomalia_relatorio_filtro_base() & Q(
@@ -193,7 +192,7 @@ def gerar_relatorio_pdf(request):
 
     is_coordenador = request.user.groups.filter(name="Coordenador").exists()
     context = {
-        "instituicao_nome": "Instituicao de Ensino",
+        "instituicao_nome": "Instituição de Ensino",
         "data_geracao": timezone.now(),
         "periodo_inicio": inicio,
         "periodo_fim": fim,
@@ -212,21 +211,20 @@ def gerar_relatorio_pdf(request):
     response["Content-Disposition"] = "inline; filename=relatorio_anomalias.pdf"
 
     pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err: # type: ignore
-        messages.error(request, "Nao foi possivel gerar o PDF.")
+    if pisa_status.err:  # type: ignore
+        messages.error(request, "Não foi possível gerar o PDF.")
         return redirect("relatorios:form")
 
-    messages.success(request, "Relatorio gerado com sucesso.")
+    messages.success(request, "Relatório gerado com sucesso.")
     return response
 
 
 @login_required
 def relatorio_semanal_pdf(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Tecnico.")
+        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
         return redirect("anomalias:lista_anomalias")
 
-    # Semana atual (segunda a domingo).
     hoje = timezone.localdate()
     inicio = hoje - timedelta(days=hoje.weekday())
     fim = inicio + timedelta(days=6)
@@ -268,7 +266,7 @@ def relatorio_semanal_pdf(request):
     is_tecnico = request.user.groups.filter(name="Tecnico").exists()
 
     context = {
-        "instituicao_nome": "Instituicao de Ensino",
+        "instituicao_nome": "Instituição de Ensino",
         "data_geracao": timezone.now(),
         "periodo_inicio": inicio,
         "periodo_fim": fim,
@@ -302,8 +300,8 @@ def relatorio_semanal_pdf(request):
     response["Content-Disposition"] = "inline; filename=relatorio_semanal.pdf"
 
     pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err: # type: ignore
-        messages.error(request, "Nao foi possivel gerar o PDF semanal.")
+    if pisa_status.err:  # type: ignore
+        messages.error(request, "Não foi possível gerar o PDF semanal.")
         return redirect("relatorios:form")
 
     return response

@@ -28,6 +28,15 @@ def is_coordenador(user):
     return user.is_authenticated and has_group(user, "Coordenador")
 
 
+def can_access_computadores(user):
+    return user.is_authenticated and (
+        user.is_staff
+        or is_admin(user)
+        or is_tecnico(user)
+        or is_coordenador(user)
+    )
+
+
 def can_view_anomalia(user, anomalia):
     if is_admin(user) or is_tecnico(user):
         return True
@@ -39,8 +48,10 @@ def can_view_anomalia(user, anomalia):
         anomalia.__class__.objects.filter(pk=anomalia.pk), user
     ).exists()
 
+
 def is_tecnico_or_admin(user):
     return is_tecnico(user) or is_admin(user)
+
 
 def can_change_estado(user, anomalia):
     return is_admin(user) or is_tecnico(user)
@@ -58,7 +69,7 @@ def can_delete_anomalia(user, anomalia):
 
 def group_required(
     check_func,
-    error_message="Você não tem permissão para aceder a esta página.",
+    error_message="Não tem permissão para aceder a esta página.",
     redirect_to="anomalias:lista_anomalias",
 ):
     def decorator(view_func):

@@ -1,13 +1,15 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.db.models import Count, Q, F, Subquery, OuterRef
-from django.utils import timezone
 from datetime import timedelta
-from salas.models import Sala
-from computadores.models import Computador
-from anomalias.models import Anomalia
-from django.contrib.auth import logout
+
 from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Count, F, Q
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from anomalias.models import Anomalia
+from computadores.models import Computador
+from salas.models import Sala
 from users.access import (
     filter_anomalias_for_user,
     filter_computadores_for_user,
@@ -15,63 +17,55 @@ from users.access import (
 )
 from users.permissions import is_admin, is_coordenador
 
+
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
-        messages.success(request, 'Logout realizado com sucesso!')
+        messages.success(request, 'Sessão terminada com sucesso!')
     return redirect('index')
 
 
-
-    
 @user_passes_test(is_admin)
 def dashboard(request):
-    # Contagem de anomalias agrupadas por estado (PENDENTE, EM_RESOLUCAO, RESOLVIDO)
     total_salas = Sala.objects.count()
     total_computadores = Computador.objects.count()
     total_anomalias = Anomalia.objects.count()
 
-    # Anomalias por estado
-    anomalias_por_estado = Anomalia.objects.values(
-        'estado').annotate(total=Count('id'))
+    anomalias_por_estado = Anomalia.objects.values('estado').annotate(total=Count('id'))
 
-    # Filtra as anomalias registradas nos últimos 7 dias (recentes)
     data_limite = timezone.now() - timedelta(days=7)
     anomalias_recentes = Anomalia.objects.filter(
         data_registo__gte=data_limite
     ).order_by('-data_registo')[:5]
 
-    # Salas com mais anomalias
     salas_problematicas = Sala.objects.annotate(
         num_anomalias_computador=Count(
             'computadores__anomalias',
             filter=Q(computadores__anomalias__estado__in=['PENDENTE', 'EM_RESOLUCAO'], computadores__anomalias__ativo=True),
-            distinct=True  
+            distinct=True
         ),
         num_anomalias_diretas=Count(
             'anomalias',
             filter=Q(anomalias__estado__in=['PENDENTE', 'EM_RESOLUCAO'], anomalias__ativo=True),
-            distinct=True  # para garantir que não duplica por joins
+            distinct=True
         )
     ).annotate(
         num_anomalias=F('num_anomalias_computador') + F('num_anomalias_diretas')
     ).filter(num_anomalias__gt=0).order_by('-num_anomalias')[:5]
-    
-    # Computadores com mais anomalias
+
     computadores_problematicos = Computador.objects.annotate(
         num_anomalias=Count(
             'anomalias',
             filter=Q(anomalias__estado__in=['PENDENTE', 'EM_RESOLUCAO'], anomalias__ativo=True)
         )
     ).filter(num_anomalias__gt=0).order_by('-num_anomalias')[:5]
-    
-    # Dados para o gráfico de pizza
+
     estados = dict(Anomalia.ESTADO_CHOICES)
     dados_estado = {
         estado: Anomalia.objects.filter(estado=estado).count()
         for estado in estados
     }
-# Monta o contexto que será enviado para o template do dashboard
+
     context = {
         'total_salas': total_salas,
         'total_computadores': total_computadores,
@@ -82,7 +76,7 @@ def dashboard(request):
         'computadores_problematicos': computadores_problematicos,
         'dados_estado_labels': list(estados.values()),
         'dados_estado_valores': list(dados_estado.values()),
-        'dados_estado_cores': ["#ff5858", "#68c2ff", "#7affb2"],  # customize as cores
+        'dados_estado_cores': ["#ff5858", "#68c2ff", "#7affb2"],
     }
 
     return render(request, 'dashboard/index.html', context)
@@ -151,9 +145,9 @@ def coordinator_dashboard(request):
     }
     return render(request, "dashboard/coordinator.html", context)
 
+
 @login_required
 def grafico_anomalias_estado(request):
-# Consulta agregada de contagem por estado
     dados = (
         filter_anomalias_for_user(Anomalia.objects.all(), request.user)
         .values('estado')
@@ -169,13 +163,12 @@ def grafico_anomalias_estado(request):
         'EM_RESOLUCAO': '#17a2b8',
         'RESOLVIDO': '#28a745',
     }
-# Prepara os dados para o gráfico
-    for item in dados:
-        labels.append(dict(Anomalia.ESTADO_CHOICES)[item['estado']])  # label amigável
-        valores.append(item['total']) # total de anomalias neste estado
-        cores.append(CORES_ESTADOS.get(item['estado'], '#6c757d'))  # cor padrão cinza
 
-# Envia os dados para o template do gráfico
+    for item in dados:
+        labels.append(dict(Anomalia.ESTADO_CHOICES)[item['estado']])
+        valores.append(item['total'])
+        cores.append(CORES_ESTADOS.get(item['estado'], '#6c757d'))
+
     context = {
         'labels': labels,
         'valores': valores,
