@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from anomalias.models import Anomalia
-from .services import AIAgentService, generate_assistant_chat_response
+from .services import AIAgentService
 
 
 def _is_tecnico(user):
@@ -45,12 +45,23 @@ def chat(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Pedido inválido."}, status=400)
 
-    message = (payload.get("message") or "").strip()
-    if not message:
+    pergunta = (payload.get("message") or "").strip()
+
+    if not pergunta:
         return JsonResponse({"error": "A mensagem é obrigatória."}, status=400)
 
-    return JsonResponse({"response": generate_assistant_chat_response(message)})
+    anomalias = (
+        Anomalia.objects.filter(ativo=True)
+        .select_related("sala", "computador", "computador__sala")
+    )
 
+    service = AIAgentService()
+
+    resposta = service.analyze(
+        pergunta,
+        list(anomalias)
+    )
+    return JsonResponse(resposta)
 
 @login_required
 def agente_ui(request):
