@@ -16,13 +16,74 @@ import matplotlib.pyplot as plt
 
 from xhtml2pdf import pisa
 
+from anomalias.qr_utils import (
+    build_computador_anomalia_url,
+    build_qr_code_data_uri,
+    build_sala_anomalia_url,
+)
 from anomalias.models import Anomalia
+from computadores.models import Computador
 from salas.models import Sala
 from users.access import filter_anomalias_for_user, filter_salas_for_user
+from users.permissions import is_admin
 
 
 def _user_can_access(user):
     return user.groups.filter(name__in=["Administrador", "Coordenador", "Tecnico"]).exists()
+
+
+def _user_can_access_qr_kit(user):
+    return is_admin(user)
+
+
+def _build_qr_kit_items(request, qr_type, sala_id=None):
+    salas = Sala.objects.order_by("numero")
+    computadores = Computador.objects.select_related("sala").order_by(
+        "sala__numero", "numero_identificacao"
+    )
+
+    if sala_id:
+        salas = salas.filter(pk=sala_id)
+        computadores = computadores.filter(sala_id=sala_id)
+
+    items = []
+
+    if qr_type in {"salas", "ambos"}:
+        for sala in salas:
+            target_url = build_sala_anomalia_url(request, sala.pk)
+            items.append(
+                {
+                    "entity_type": "sala",
+                    "title": f"Sala {sala.numero}",
+                    "meta_lines": [f"Sala: {sala.numero}"],
+                    "description": "Escaneie este código para reportar uma anomalia nesta sala.",
+                    "target_url": target_url,
+                    "qr_code_data_uri": build_qr_code_data_uri(target_url),
+                }
+            )
+
+    if qr_type in {"computadores", "ambos"}:
+        for computador in computadores:
+            target_url = build_computador_anomalia_url(
+                request,
+                computador.sala_id,
+                computador.pk,
+            )
+            items.append(
+                {
+                    "entity_type": "computador",
+                    "title": f"Computador {computador.numero_identificacao}",
+                    "meta_lines": [
+                        f"Sala: {computador.sala.numero}",
+                        f"Computador: {computador.numero_identificacao}",
+                    ],
+                    "description": "Escaneie este código para reportar uma anomalia neste computador.",
+                    "target_url": target_url,
+                    "qr_code_data_uri": build_qr_code_data_uri(target_url),
+                }
+            )
+
+    return items
 
 
 def _periodo_datas(periodo, data_inicio_raw, data_fim_raw):
@@ -162,6 +223,62 @@ def relatorio_form(request):
         "tipo_choices": Anomalia._meta.get_field("tipo").choices,
     }
     return render(request, "relatorios/relatorio_form.html", context)
+
+
+@login_required
+def qrcode_kit_form(request):
+    if not _user_can_access_qr_kit(request.user):
+        messages.error(request, "Acesso restrito a Administrador.")
+        return redirect("anomalias:lista_anomalias")
+
+    salas = Sala.objects.order_by("numero")
+    context = {
+        "salas": salas,
+        "selected_type": request.GET.get("tipo", "ambos"),
+        "selected_sala": request.GET.get("sala", ""),
+    }
+    return render(request, "relatorios/qrcode_kit_form.html", context)
+
+
+@login_required
+def qrcode_kit_pdf(request):
+    if not _user_can_access_qr_kit(request.user):
+        messages.error(request, "Acesso restrito a Administrador.")
+        return redirect("anomalias:lista_anomalias")
+
+    qr_type = request.GET.get("tipo") or "ambos"
+    if qr_type not in {"salas", "computadores", "ambos"}:
+        qr_type = "ambos"
+
+    sala_id_raw = request.GET.get("sala")
+    sala_id = None
+    if sala_id_raw:
+        try:
+            sala_id = int(sala_id_raw)
+        except (TypeError, ValueError):
+            sala_id = None
+
+    items = _build_qr_kit_items(request, qr_type, sala_id=sala_id)
+    if not items:
+        messages.warning(request, "Nenhum QR Code encontrado para os filtros selecionados.")
+        return redirect("relatorios:qrcode_kit_form")
+
+    context = {
+        "items": items,
+        "generated_at": timezone.now(),
+    }
+
+    template = get_template("relatorios/qrcode_kit_pdf.html")
+    html = template.render(context)
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=kit_qr_codes.pdf"
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:  # type: ignore
+        messages.error(request, "Não foi possível gerar o PDF do kit de QR Codes.")
+        return redirect("relatorios:qrcode_kit_form")
+
+    return response
 
 
 @login_required

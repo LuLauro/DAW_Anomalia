@@ -7,5 +7,6 @@ matplotlib>=3.7
 xhtml2pdf>=0.2.11
 
 Pillow>=10.0
+qrcode[pil]>=7.4
 
 google-genai

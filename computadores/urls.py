@@ -6,5 +6,6 @@ app_name = 'computadores'
 urlpatterns = [
     path('', views.lista_computadores, name='lista_computadores'),
     path('registar/', views.registar_computador, name='registar_computador'),
+    path('<int:pk>/qrcode/', views.qrcode_computador, name='qrcode_computador'),
     path('<int:pk>/', views.detalhe_computador, name='detalhe_computador'),
 ]

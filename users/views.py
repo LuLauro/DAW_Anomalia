@@ -57,6 +57,10 @@ class CustomLoginView(LoginView):
         template_name = 'users/login.html'
 
         def get_success_url(self):
+            redirect_url = self.get_redirect_url()
+            if redirect_url:
+                return redirect_url
+
             user = self.request.user
 
             if is_admin(user):

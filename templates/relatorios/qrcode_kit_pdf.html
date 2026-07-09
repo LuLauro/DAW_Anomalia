@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.8cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #1f2937;
+            font-size: 12px;
+        }
+
+        .qr-page {
+            page-break-after: always;
+        }
+
+        .qr-page.last {
+            page-break-after: auto;
+        }
+
+        .qr-wrap {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 8px;
+        }
+
+        .meta {
+            margin: 0 0 6px;
+            font-size: 13px;
+        }
+
+        .description {
+            margin: 18px 0 24px;
+            font-size: 14px;
+        }
+
+        .qr-image {
+            width: 280px;
+            height: 280px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+        }
+
+        .url-block {
+            margin-top: 24px;
+            text-align: left;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+        }
+
+        .url-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .footer {
+            margin-top: 18px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    {% for item in items %}
+    <div class="qr-page {% if forloop.last %}last{% endif %}">
+        <div class="qr-wrap">
+            <div class="title">{{ item.title }}</div>
+
+            {% for meta_line in item.meta_lines %}
+            <p class="meta">{{ meta_line }}</p>
+            {% endfor %}
+
+            <p class="description">{{ item.description }}</p>
+
+            <img class="qr-image" src="{{ item.qr_code_data_uri }}" alt="QR Code">
+
+            <div class="url-block">
+                <div class="url-label">URL utilizada</div>
+                <div>{{ item.target_url }}</div>
+            </div>
+
+            <div class="footer">
+                Kit gerado em {{ generated_at|date:"d/m/Y H:i" }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

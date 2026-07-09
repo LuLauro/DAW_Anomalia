@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Kit de QR Codes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>QR Codes</h2>
+        <p>Gere um PDF A4 com QR Codes de salas, computadores ou ambos.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Kit de QR Codes</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{% url 'relatorios:qrcode_kit_pdf' %}" class="row g-3">
+            <div class="col-md-6">
+                <label for="id_tipo" class="form-label">Gerar</label>
+                <select id="id_tipo" name="tipo" class="form-select">
+                    <option value="salas" {% if selected_type == "salas" %}selected{% endif %}>QR Codes de todas as Salas</option>
+                    <option value="computadores" {% if selected_type == "computadores" %}selected{% endif %}>QR Codes de todos os Computadores</option>
+                    <option value="ambos" {% if selected_type == "ambos" %}selected{% endif %}>Ambos</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="id_sala" class="form-label">Filtrar por Sala</label>
+                <select id="id_sala" name="sala" class="form-select">
+                    <option value="">Todas as Salas</option>
+                    {% for sala in salas %}
+                    <option value="{{ sala.pk }}" {% if selected_sala == sala.pk|stringformat:"s" %}selected{% endif %}>
+                        Sala {{ sala.numero }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 form-row-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-pdf me-2"></i>Gerar PDF
+                </button>
+                <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

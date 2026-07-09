@@ -103,6 +103,50 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    function getRenderedComputerOptions() {
+        return Array.from(computerSelect.options).filter(function (option) {
+            return option.value;
+        });
+    }
+
+    function hasScopedComputerOptions(roomId) {
+        const options = getRenderedComputerOptions();
+        if (!roomId || !options.length) {
+            return false;
+        }
+
+        return options.every(function (option) {
+            return String(option.dataset.roomId || "") === String(roomId);
+        });
+    }
+
+    function syncComputerControlFromRenderedOptions() {
+        const options = getRenderedComputerOptions();
+        const hasOptions = options.length > 0;
+
+        computerControl.settings.placeholder = hasOptions
+            ? "Pesquisar computador..."
+            : "Sem computadores nesta sala";
+        computerControl.inputState();
+
+        if (hasOptions) {
+            computerControl.enable();
+        } else {
+            computerControl.disable();
+        }
+
+        if (initialComputerValue) {
+            const match = options.find(function (option) {
+                return String(option.value) === String(initialComputerValue);
+            });
+            if (match) {
+                computerControl.setValue(String(initialComputerValue), true);
+            }
+        }
+
+        computerControl.refreshOptions(false);
+    }
+
     function resetComputerField(disabled, placeholderText) {
         computerControl.clear(true);
         computerControl.clearOptions();
@@ -168,7 +212,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const initialRoomValue = roomSelect.value;
     if (initialRoomValue) {
         roomControl.setValue(initialRoomValue, true);
-        loadComputersForRoom(initialRoomValue);
+        if (hasScopedComputerOptions(initialRoomValue)) {
+            syncComputerControlFromRenderedOptions();
+        } else {
+            loadComputersForRoom(initialRoomValue);
+        }
     } else {
         resetComputerField(true, "Selecione uma sala primeiro");
     }

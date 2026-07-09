@@ -49,6 +49,13 @@
                         <span>Anomalias</span>
                     </a>
 
+                    {% if user|has_group:"Administrador" or user.is_superuser %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'relatorios' and request.resolver_match.url_name == 'qrcode_kit_form' %}is-active{% endif %}" href="{% url 'relatorios:qrcode_kit_form' %}">
+                        <i class="fas fa-qrcode"></i>
+                        <span>QR Codes</span>
+                    </a>
+                    {% endif %}
+
                     {% if user|has_group:"Tecnico" %}
                     <a class="sidebar-link {% if request.resolver_match.namespace == 'tecnico' %}is-active{% endif %}" href="{% url 'tecnico:dashboard' %}">
                         <i class="fas fa-screwdriver-wrench"></i>

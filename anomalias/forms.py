@@ -134,11 +134,39 @@ class AnomaliaForm(forms.ModelForm):
 
         sala_inicial = None
         computador_atual = self.instance.computador if getattr(self.instance, "pk", None) else None
+        computador_inicial = None
+        sala_inicial_id = None
         if computador_atual:
             sala_inicial = computador_atual.sala
             self.initial.setdefault("sala", computador_atual.sala_id)
+        elif self.initial.get("computador"):
+            try:
+                computador_inicial = computadores_queryset.get(pk=self.initial["computador"])
+            except (Computador.DoesNotExist, TypeError, ValueError):
+                computador_inicial = None
+            if computador_inicial:
+                sala_inicial = computador_inicial.sala
+                self.initial.setdefault("sala", computador_inicial.sala_id)
         elif getattr(self.instance, "sala_id", None):
             sala_inicial = self.instance.sala
+        elif self.initial.get("sala"):
+            try:
+                sala_inicial = self.fields["sala"].queryset.get(pk=self.initial["sala"])
+            except (Sala.DoesNotExist, TypeError, ValueError):
+                sala_inicial = None
+
+        if sala_inicial:
+            sala_inicial_id = sala_inicial.pk
+        elif self.initial.get("sala"):
+            try:
+                sala_inicial_id = int(self.initial["sala"])
+            except (TypeError, ValueError):
+                sala_inicial_id = None
+
+        if sala_inicial_id:
+            self.fields["computador"].queryset = computadores_queryset.filter(
+                sala_id=sala_inicial_id
+            )
 
         sala_data = self.data.get("sala") if self.is_bound else None
         computador_disponivel = False
@@ -153,7 +181,7 @@ class AnomaliaForm(forms.ModelForm):
             computador_disponivel = computadores_queryset.filter(sala=sala_inicial).exists()
 
         self.fields["computador"].required = False
-        if not computador_disponivel and not computador_atual:
+        if not computador_disponivel and not computador_atual and not computador_inicial:
             self.fields["computador"].widget.attrs["disabled"] = "disabled"
         else:
             self.fields["computador"].widget.attrs.pop("disabled", None)

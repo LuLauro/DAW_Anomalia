@@ -35,6 +35,9 @@
                     <td>{{ sala.descricao|truncatewords:10 }}</td>
                     <td>{{ sala.computadores.count }}</td>
                     <td>
+                        <a href="{% url 'salas:qrcode_sala' sala.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-qr-code me-1"></i>QR Code
+                        </a>
                         <a href="{% url 'salas:detalhe_sala' sala.pk %}" class="btn btn-sm btn-info">Detalhes</a>
                     </td>
                 </tr>

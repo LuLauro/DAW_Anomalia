@@ -59,6 +59,9 @@
                     <td>{{ computador.modelo }}</td>
                     <td>{{ computador.data_aquisicao|default:"-" }}</td>
                     <td>
+                        <a href="{% url 'computadores:qrcode_computador' computador.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-qr-code me-1"></i>QR Code
+                        </a>
                         <a href="{% url 'computadores:detalhe_computador' computador.pk %}" class="btn btn-sm btn-info">Detalhes</a>
                     </td>
                 </tr>

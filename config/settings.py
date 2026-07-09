@@ -11,7 +11,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['95.94.41.243', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -130,6 +130,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 GEMINI_API_KEY = config("GEMINI_API_KEY")
+QR_CODE_BASE_URL = config("QR_CODE_BASE_URL", default="").strip()
 
 # Security settings (ative apenas em produção)
 if not DEBUG:

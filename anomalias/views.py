@@ -6,7 +6,12 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from computadores.models import Computador
-from users.access import filter_anomalias_for_user, filter_computadores_for_user
+from salas.models import Sala
+from users.access import (
+    filter_anomalias_for_user,
+    filter_computadores_for_user,
+    filter_salas_for_user,
+)
 from users.permissions import (
     can_add_observacao,
     can_delete_anomalia,
@@ -27,6 +32,45 @@ from .utils import (
     get_email_recipients_for_new_anomaly,
     get_email_recipients_for_status_change,
 )
+
+
+def _get_registar_anomalia_initial(request):
+    initial = {}
+    salas = filter_salas_for_user(Sala.objects.all(), request.user)
+    computadores = filter_computadores_for_user(
+        Computador.objects.select_related("sala"),
+        request.user,
+    )
+
+    sala_param = request.GET.get("sala")
+    pc_param = request.GET.get("pc")
+
+    sala = None
+    computador = None
+
+    if sala_param:
+        try:
+            sala = salas.get(pk=sala_param)
+        except (Sala.DoesNotExist, TypeError, ValueError):
+            sala = None
+
+    if pc_param:
+        try:
+            computador = computadores.get(pk=pc_param)
+        except (Computador.DoesNotExist, TypeError, ValueError):
+            computador = None
+
+    if sala and computador and computador.sala_id != sala.pk:
+        computador = None
+
+    if sala:
+        initial["sala"] = sala.pk
+
+    if computador:
+        initial["computador"] = computador.pk
+        initial.setdefault("sala", computador.sala_id)
+
+    return initial
 
 
 @login_required
@@ -127,7 +171,10 @@ Reportado por: {request.user.get_full_name()} ({request.user.email})
             messages.success(request, "Anomalia registada com sucesso!")
             return redirect("anomalias:lista_anomalias")
     else:
-        form = AnomaliaForm(user=request.user)
+        form = AnomaliaForm(
+            user=request.user,
+            initial=_get_registar_anomalia_initial(request),
+        )
     return render(request, "anomalias/registar_anomalia.html", {"form": form})
 
 

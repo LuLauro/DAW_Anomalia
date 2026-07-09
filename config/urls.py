@@ -15,7 +15,7 @@ urlpatterns = [
     path('salas/', include('salas.urls')),
     path('computadores/', include('computadores.urls')),
     path('tecnico/', include('tecnico.urls')),
-    path('relatorios/', include('relatorios.urls')),
+    path('relatorios/', include(('relatorios.urls', 'relatorios'), namespace='relatorios')),
     path('ai/', include('ai_agent.urls')),
     path('', include(('users.management_urls', 'user_management'), namespace='user_management')),
 
