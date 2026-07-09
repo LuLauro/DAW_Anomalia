@@ -109,10 +109,10 @@ def registar_anomalia(request):
             mensagem = f"""
 Foi registada uma nova anomalia.
 
-TÃƒÂ­tulo: {anomalia.titulo}
+Título: {anomalia.titulo}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
-DescriÃƒÂ§ÃƒÂ£o: {anomalia.descricao}
+Descrição: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Criada", mensagem)
@@ -134,7 +134,7 @@ def atualizar_estado(request, pk):
     )
 
     if request.user.groups.filter(name="Coordenador").exists():
-        messages.warning(request, "Coordenadores nÃƒÂ£o podem alterar o estado.")
+        messages.warning(request, "Coordenadores não podem alterar o estado.")
         return redirect("anomalias:lista_anomalias")
 
     if (
@@ -142,7 +142,7 @@ def atualizar_estado(request, pk):
         and anomalia.reportado_por != request.user
     ):
         messages.warning(
-            request, "Professores sÃƒÂ³ podem alterar o estado das suas prÃƒÂ³prias anomalias."
+            request, "Professores só podem alterar o estado das suas próprias anomalias."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -158,7 +158,7 @@ def atualizar_estado(request, pk):
             mensagem = f"""
 O estado de uma anomalia foi atualizado.
 
-TÃƒÂ­tulo: {anomalia.titulo}
+Título: {anomalia.titulo}
 Novo estado: {anomalia.estado}
 Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
@@ -209,7 +209,7 @@ def adicionar_observacao(request, pk):
 
     if not can_add_observacao(request.user, anomalia):
         messages.warning(
-            request, "VocÃƒÂª nÃƒÂ£o tem permissÃƒÂ£o para adicionar observaÃƒÂ§ÃƒÂµes."
+            request, "Você não tem permissão para adicionar observações."
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -336,8 +336,9 @@ def registar_anomalia_geral(request):
             mensagem = f"""
 Foi registada uma nova anomalia geral.
 
-TÃƒÂ­tulo: {anomalia.titulo}
-DescriÃƒÂ§ÃƒÂ£o: {anomalia.descricao}
+Título: {anomalia.titulo}
+Descrição: {anomalia.descricao}
+Sala: {anomalia.sala.numero if anomalia.sala else "N/A"}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
             enviar_email_grupos("Nova Anomalia Geral Criada", mensagem)
