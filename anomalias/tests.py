@@ -6,6 +6,10 @@ from computadores.models import Computador
 from salas.models import Sala
 
 from .models import Anomalia
+from .utils import (
+    get_email_recipients_for_new_anomaly,
+    get_email_recipients_for_status_change,
+)
 
 
 class CoordinatorAccessRestrictionTests(TestCase):
@@ -226,3 +230,160 @@ class PriorityTests(TestCase):
         anomalia.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(anomalia.prioridade, "MEDIA")
+
+
+class EmailRecipientRulesTests(TestCase):
+    def setUp(self):
+        self.admin_group = Group.objects.create(name="Administrador")
+        self.coordinator_group = Group.objects.create(name="Coordenador")
+        self.professor_group = Group.objects.create(name="Professor")
+        self.tecnico_group = Group.objects.create(name="Tecnico")
+
+        self.admin = User.objects.create_user(
+            username="admin",
+            email="admin@example.com",
+            password="secret123",
+            is_staff=True,
+        )
+        self.admin.groups.add(self.admin_group)
+
+        self.other_admin = User.objects.create_user(
+            username="admin2",
+            email="admin2@example.com",
+            password="secret123",
+        )
+        self.other_admin.groups.add(self.admin_group)
+
+        self.coordinator = User.objects.create_user(
+            username="coord",
+            email="coord@example.com",
+            password="secret123",
+        )
+        self.coordinator.groups.add(self.coordinator_group)
+
+        self.professor = User.objects.create_user(
+            username="prof",
+            email="prof@example.com",
+            password="secret123",
+        )
+        self.professor.groups.add(self.professor_group)
+
+        self.tecnico = User.objects.create_user(
+            username="tec",
+            email="tec@example.com",
+            password="secret123",
+        )
+        self.tecnico.groups.add(self.tecnico_group)
+
+        self.room = Sala.objects.create(numero="A1.1", coordinator=self.coordinator)
+        self.computer = Computador.objects.create(
+            numero_identificacao="PC-1",
+            sala=self.room,
+            marca="Dell",
+            modelo="Optiplex",
+        )
+
+    def test_professor_new_anomaly_notifies_admins_and_room_coordinator_only(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Teste",
+            descricao="Teste",
+            computador=self.computer,
+            reportado_por=self.professor,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.professor)
+
+        self.assertCountEqual(
+            recipients,
+            ["admin@example.com", "admin2@example.com", "coord@example.com"],
+        )
+        self.assertNotIn("prof@example.com", recipients)
+        self.assertNotIn("tec@example.com", recipients)
+
+    def test_coordinator_new_anomaly_notifies_only_admins(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Teste",
+            descricao="Teste",
+            computador=self.computer,
+            reportado_por=self.coordinator,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.coordinator)
+
+        self.assertCountEqual(recipients, ["admin@example.com", "admin2@example.com"])
+        self.assertNotIn("coord@example.com", recipients)
+
+    def test_admin_new_anomaly_notifies_only_coordinator(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Teste",
+            descricao="Teste",
+            computador=self.computer,
+            reportado_por=self.admin,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.admin)
+
+        self.assertEqual(recipients, ["coord@example.com"])
+        self.assertNotIn("admin@example.com", recipients)
+
+    def test_new_anomaly_without_room_notifies_only_admins(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Geral",
+            descricao="Sem sala",
+            reportado_por=self.professor,
+            sala=None,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.professor)
+
+        self.assertCountEqual(recipients, ["admin@example.com", "admin2@example.com"])
+
+    def test_new_anomaly_with_room_without_coordinator_notifies_only_admins(self):
+        room_without_coordinator = Sala.objects.create(numero="B2.1")
+        computer_without_coordinator = Computador.objects.create(
+            numero_identificacao="PC-2",
+            sala=room_without_coordinator,
+            marca="HP",
+            modelo="EliteDesk",
+        )
+        anomalia = Anomalia.objects.create(
+            titulo="Sem coordenador",
+            descricao="Teste",
+            computador=computer_without_coordinator,
+            reportado_por=self.admin,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.admin)
+
+        self.assertEqual(recipients, ["admin2@example.com"])
+
+    def test_status_change_notifies_admins_coordinator_and_reporter_except_actor(self):
+        anomalia = Anomalia.objects.create(
+            titulo="Teste",
+            descricao="Teste",
+            computador=self.computer,
+            reportado_por=self.professor,
+        )
+
+        recipients = get_email_recipients_for_status_change(anomalia, self.admin)
+
+        self.assertCountEqual(recipients, ["admin2@example.com", "coord@example.com", "prof@example.com"])
+        self.assertNotIn("admin@example.com", recipients)
+        self.assertNotIn("tec@example.com", recipients)
+
+    def test_missing_email_and_duplicates_are_ignored(self):
+        self.other_admin.email = ""
+        self.other_admin.save(update_fields=["email"])
+        self.coordinator.email = "admin@example.com"
+        self.coordinator.save(update_fields=["email"])
+
+        anomalia = Anomalia.objects.create(
+            titulo="Teste",
+            descricao="Teste",
+            computador=self.computer,
+            reportado_por=self.professor,
+        )
+
+        recipients = get_email_recipients_for_new_anomaly(anomalia, self.professor)
+
+        self.assertEqual(recipients, ["admin@example.com"])

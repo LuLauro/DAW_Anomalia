@@ -22,7 +22,11 @@ from .forms import (
     FiltroHistoricoForm,
 )
 from .models import AnexoAnomalia, Anomalia
-from .utils import enviar_email_grupos
+from .utils import (
+    enviar_email_destinatarios,
+    get_email_recipients_for_new_anomaly,
+    get_email_recipients_for_status_change,
+)
 
 
 @login_required
@@ -115,7 +119,11 @@ Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
 Descrição: {anomalia.descricao}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
-            enviar_email_grupos("Nova Anomalia Criada", mensagem)
+            enviar_email_destinatarios(
+                "Nova Anomalia Criada",
+                mensagem,
+                get_email_recipients_for_new_anomaly(anomalia, request.user),
+            )
             messages.success(request, "Anomalia registada com sucesso!")
             return redirect("anomalias:lista_anomalias")
     else:
@@ -164,7 +172,11 @@ Computador: {anomalia.computador or "Sem computador"}
 Sala: {anomalia.computador.sala if anomalia.computador else "N/A"}
 Alterado por: {request.user.get_full_name()} ({request.user.email})
 """
-            enviar_email_grupos("Anomalia Atualizada", mensagem)
+            enviar_email_destinatarios(
+                "Anomalia Atualizada",
+                mensagem,
+                get_email_recipients_for_status_change(anomalia, request.user),
+            )
             messages.success(request, "Estado atualizado com sucesso!")
     return redirect("anomalias:lista_anomalias")
 
@@ -341,7 +353,11 @@ Descrição: {anomalia.descricao}
 Sala: {anomalia.sala.numero if anomalia.sala else "N/A"}
 Reportado por: {request.user.get_full_name()} ({request.user.email})
 """
-            enviar_email_grupos("Nova Anomalia Geral Criada", mensagem)
+            enviar_email_destinatarios(
+                "Nova Anomalia Geral Criada",
+                mensagem,
+                get_email_recipients_for_new_anomaly(anomalia, request.user),
+            )
             messages.success(request, "Anomalia geral registada com sucesso.")
             return redirect("anomalias:lista_anomalias")
     else:

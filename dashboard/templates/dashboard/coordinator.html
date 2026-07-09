@@ -3,234 +3,252 @@
 {% block title %}Dashboard do Coordenador{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1>Dashboard do Coordenador</h1>
-        <p>Resumo das salas sob a sua responsabilidade, com foco nas anomalias e equipamentos associados.</p>
-    </div>
-</div>
-
-<div class="metric-grid">
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Salas Atribuídas</p>
-                <h2 class="metric-value">{{ total_salas }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-door-open"></i></span>
+<div class="admin-dashboard coordinator-dashboard">
+    <section class="page-header admin-dashboard-header">
+        <div>
+            <h1>Dashboard do Coordenador</h1>
+            <p>Resumo das salas sob a sua responsabilidade, com foco nas anomalias e equipamentos associados.</p>
         </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Computadores</p>
-                <h2 class="metric-value">{{ total_computadores }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-desktop"></i></span>
+        <div class="admin-dashboard-summary">
+            <span class="summary-pill">
+                <i class="fas fa-building-shield"></i>
+                &Aacute;rea coordenada
+            </span>
         </div>
-    </article>
+    </section>
 
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Pendentes</p>
-                <h2 class="metric-value">{{ total_pendentes }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-hourglass-half"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Em Resolução</p>
-                <h2 class="metric-value">{{ total_em_resolucao }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-screwdriver-wrench"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Resolvidas</p>
-                <h2 class="metric-value">{{ total_resolvidas }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-circle-check"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Críticas</p>
-                <h2 class="metric-value">{{ total_criticas }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-bolt"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Altas</p>
-                <h2 class="metric-value">{{ total_altas }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-fire"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Médias</p>
-                <h2 class="metric-value">{{ total_medias }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-equals"></i></span>
-        </div>
-    </article>
-
-    <article class="metric-card">
-        <div class="metric-top">
-            <div>
-                <p class="metric-label">Baixas</p>
-                <h2 class="metric-value">{{ total_baixas }}</h2>
-            </div>
-            <span class="metric-icon"><i class="fas fa-leaf"></i></span>
-        </div>
-    </article>
-</div>
-
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Anomalias por Sala</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-card mb-4">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Sala</th>
-                                    <th class="text-end">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sala in anomalias_por_sala %}
-                                <tr>
-                                    <td>{{ sala.numero }}</td>
-                                    <td class="text-end">{{ sala.num_anomalias }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="2" class="text-center">Sem anomalias nas salas atribuídas.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+    <section class="dashboard-kpi-section">
+        <div class="metric-grid admin-kpi-grid coordinator-kpi-grid-main">
+            <article class="metric-card admin-kpi-card tone-blue">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Salas Atribu&iacute;das</p>
+                        <h3 class="metric-value">{{ total_salas }}</h3>
+                        <p class="metric-caption">Salas sob coordena&ccedil;&atilde;o</p>
                     </div>
+                    <span class="metric-icon"><i class="fas fa-door-open"></i></span>
                 </div>
-                <div class="chart-wrap">
-                    <div class="chart-canvas-wrap">
-                        <canvas id="graficoSala"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+            </article>
 
-    <div class="col-lg-6">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Anomalias por Estado</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-card mb-4">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Estado</th>
-                                    <th class="text-end">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for estado in anomalias_por_estado %}
-                                <tr>
-                                    <td>{{ estado.label }}</td>
-                                    <td class="text-end">{{ estado.total }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <article class="metric-card admin-kpi-card tone-amber">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Pendentes</p>
+                        <h3 class="metric-value">{{ total_pendentes }}</h3>
+                        <p class="metric-caption">Aguardam interven&ccedil;&atilde;o</p>
                     </div>
+                    <span class="metric-icon"><i class="fas fa-hourglass-half"></i></span>
                 </div>
-                <div class="chart-wrap">
-                    <div class="chart-canvas-wrap">
-                        <canvas id="graficoEstado"></canvas>
+            </article>
+
+            <article class="metric-card admin-kpi-card tone-cyan">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Em Resolu&ccedil;&atilde;o</p>
+                        <h3 class="metric-value">{{ total_em_resolucao }}</h3>
+                        <p class="metric-caption">Em tratamento</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-screwdriver-wrench"></i></span>
+                </div>
+            </article>
+
+            <article class="metric-card admin-kpi-card tone-green">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Resolvidas</p>
+                        <h3 class="metric-value">{{ total_resolvidas }}</h3>
+                        <p class="metric-caption">Ocorr&ecirc;ncias conclu&iacute;das</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-circle-check"></i></span>
+                </div>
+            </article>
+        </div>
+
+        <div class="metric-grid admin-kpi-grid admin-kpi-grid-four admin-kpi-grid-priority">
+            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-red">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Cr&iacute;ticas</p>
+                        <h3 class="metric-value">{{ total_criticas }}</h3>
+                        <p class="metric-caption">Interven&ccedil;&atilde;o imediata</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-bolt"></i></span>
+                </div>
+            </article>
+
+            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-orange">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Altas</p>
+                        <h3 class="metric-value">{{ total_altas }}</h3>
+                        <p class="metric-caption">Prioridade elevada</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-fire"></i></span>
+                </div>
+            </article>
+
+            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-amber">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">M&eacute;dias</p>
+                        <h3 class="metric-value">{{ total_medias }}</h3>
+                        <p class="metric-caption">Acompanhamento regular</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-equals"></i></span>
+                </div>
+            </article>
+
+            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-green">
+                <div class="metric-topbar"></div>
+                <div class="metric-top">
+                    <div>
+                        <p class="metric-label">Baixas</p>
+                        <h3 class="metric-value">{{ total_baixas }}</h3>
+                        <p class="metric-caption">Impacto reduzido</p>
+                    </div>
+                    <span class="metric-icon"><i class="fas fa-leaf"></i></span>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card chart-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Anomalias por Sala</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-card mb-4">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Sala</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sala in anomalias_por_sala %}
+                                    <tr>
+                                        <td>{{ sala.numero }}</td>
+                                        <td class="text-end">{{ sala.num_anomalias }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center">Sem anomalias nas salas atribu&iacute;das.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <div class="chart-canvas-wrap">
+                            <canvas id="graficoSala"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="card h-100 mt-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Anomalias Recentes</h5>
+        <div class="col-lg-6">
+            <div class="card chart-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Anomalias por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-card mb-4">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Estado</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for estado in anomalias_por_estado %}
+                                    <tr>
+                                        <td>{{ estado.label }}</td>
+                                        <td class="text-end">{{ estado.total }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <div class="chart-canvas-wrap">
+                            <canvas id="graficoEstado"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-card">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Estado</th>
-                            <th>Prioridade</th>
-                            <th>Sala</th>
-                            <th>Computador</th>
-                            <th>Data</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for anomalia in anomalias_recentes %}
-                        <tr>
-                            <td>{{ anomalia.titulo }}</td>
-                            <td>{{ anomalia.get_estado_display }}</td>
-                            <td>{% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</td>
-                            <td>
-                                {% if anomalia.computador %}
-                                    {{ anomalia.computador.sala.numero }}
-                                {% elif anomalia.sala %}
-                                    {{ anomalia.sala.numero }}
-                                {% else %}
-                                    <em>-</em>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if anomalia.computador %}
-                                    {{ anomalia.computador.numero_identificacao }}
-                                {% else %}
-                                    <em>-</em>
-                                {% endif %}
-                            </td>
-                            <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
-                            <td class="text-end">
-                                <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhe</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center">Sem anomalias registadas nas suas salas.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+    <div class="card h-100 mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Anomalias Recentes</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>T&iacute;tulo</th>
+                                <th>Estado</th>
+                                <th>Prioridade</th>
+                                <th>Sala</th>
+                                <th>Computador</th>
+                                <th>Data</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anomalia in anomalias_recentes %}
+                            <tr>
+                                <td>{{ anomalia.titulo }}</td>
+                                <td>{{ anomalia.get_estado_display }}</td>
+                                <td>{% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</td>
+                                <td>
+                                    {% if anomalia.computador %}
+                                        {{ anomalia.computador.sala.numero }}
+                                    {% elif anomalia.sala %}
+                                        {{ anomalia.sala.numero }}
+                                    {% else %}
+                                        <em>-</em>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if anomalia.computador %}
+                                        {{ anomalia.computador.numero_identificacao }}
+                                    {% else %}
+                                        <em>-</em>
+                                    {% endif %}
+                                </td>
+                                <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">Sem anomalias registadas nas suas salas.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
