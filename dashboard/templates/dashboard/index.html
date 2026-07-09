@@ -39,7 +39,7 @@
                         <h3 class="metric-value">{{ total_computadores }}</h3>
                         <p class="metric-caption">Equipamentos monitorizados</p>
                     </div>
-                    <span class="metric-icon"><i class="fas fa-computer"></i></span>
+                    <span class="metric-icon"><i class="fas fa-desktop"></i></span>
                 </div>
             </article>
 
@@ -125,49 +125,83 @@
         </div>
     </section>
 
-    <div class="admin-main-grid">
-        <section class="card recent-table-card">
+    <section class="card recent-table-card">
+        <div class="card-header">
+            <h5 class="mb-0">Anomalias Recentes</h5>
+            <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-card admin-table-card">
+                <div class="table-responsive">
+                    <table class="table admin-table recent-admin-table">
+                        <thead>
+                            <tr>
+                                <th>T&iacute;tulo</th>
+                                <th>Sala</th>
+                                <th>Estado</th>
+                                <th>Prioridade</th>
+                                <th>Data</th>
+                                <th class="text-end">A&ccedil;&otilde;es</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anomalia in anomalias_recentes %}
+                            <tr>
+                                <td>{{ anomalia.titulo }}</td>
+                                <td>
+                                    {% if anomalia.computador %}
+                                        {{ anomalia.computador.sala.numero }}
+                                    {% elif anomalia.sala %}
+                                        {{ anomalia.sala.numero }}
+                                    {% else %}
+                                        N&atilde;o definida
+                                    {% endif %}
+                                </td>
+                                <td><span class="status-badge status-badge-{{ anomalia.estado|lower }}">{{ anomalia.get_estado_display }}</span></td>
+                                <td>{% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</td>
+                                <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">Nenhuma anomalia foi registada recentemente.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-compact-grid dashboard-secondary-grid">
+        <article class="card stats-compact-card">
             <div class="card-header">
-                <h5 class="mb-0">Anomalias Recentes</h5>
-                <a href="{% url 'anomalias:lista_anomalias' %}" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+                <h5 class="mb-0">Salas com mais ocorr&ecirc;ncias</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-card admin-table-card">
                     <div class="table-responsive">
-                        <table class="table admin-table recent-admin-table">
+                        <table class="table admin-table secondary-admin-table secondary-admin-table-salas">
                             <thead>
                                 <tr>
-                                    <th>T&iacute;tulo</th>
+                                    <th>Posi&ccedil;&atilde;o</th>
                                     <th>Sala</th>
-                                    <th>Estado</th>
-                                    <th>Prioridade</th>
-                                    <th>Data</th>
-                                    <th class="text-end">A&ccedil;&otilde;es</th>
+                                    <th class="text-end">Total de Anomalias</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for anomalia in anomalias_recentes %}
+                                {% for sala in salas_problematicas %}
                                 <tr>
-                                    <td>{{ anomalia.titulo }}</td>
-                                    <td>
-                                        {% if anomalia.computador %}
-                                            {{ anomalia.computador.sala.numero }}
-                                        {% elif anomalia.sala %}
-                                            {{ anomalia.sala.numero }}
-                                        {% else %}
-                                            N&atilde;o definida
-                                        {% endif %}
-                                    </td>
-                                    <td><span class="status-badge status-badge-{{ anomalia.estado|lower }}">{{ anomalia.get_estado_display }}</span></td>
-                                    <td>{% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}</td>
-                                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
-                                    <td class="text-end">
-                                        <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
-                                    </td>
+                                    <td><span class="table-rank">{{ forloop.counter }}</span></td>
+                                    <td>Sala {{ sala.numero }}</td>
+                                    <td class="text-end">{{ sala.num_anomalias }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center">Nenhuma anomalia foi registada recentemente.</td>
+                                    <td colspan="3" class="text-center">Nenhuma sala com anomalias registadas.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -175,80 +209,44 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </article>
 
-        <div class="stats-compact-grid">
-            <article class="card stats-compact-card">
-                <div class="card-header">
-                    <h5 class="mb-0">Salas com mais ocorr&ecirc;ncias</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-card admin-table-card">
-                        <div class="table-responsive">
-                            <table class="table admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Posi&ccedil;&atilde;o</th>
-                                        <th>Sala</th>
-                                        <th class="text-end">Total de Anomalias</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for sala in salas_problematicas %}
-                                    <tr>
-                                        <td><span class="table-rank">{{ forloop.counter }}</span></td>
-                                        <td>Sala {{ sala.numero }}</td>
-                                        <td class="text-end">{{ sala.num_anomalias }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="3" class="text-center">Nenhuma sala com anomalias registadas.</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+        <article class="card stats-compact-card">
+            <div class="card-header">
+                <h5 class="mb-0">Computadores com mais ocorr&ecirc;ncias</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-card admin-table-card">
+                    <div class="table-responsive">
+                        <table class="table admin-table secondary-admin-table secondary-admin-table-computadores">
+                            <thead>
+                                <tr>
+                                    <th>Posi&ccedil;&atilde;o</th>
+                                    <th>Computador</th>
+                                    <th>Sala</th>
+                                    <th class="text-end">Total de Anomalias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for computador in computadores_problematicos %}
+                                <tr>
+                                    <td><span class="table-rank">{{ forloop.counter }}</span></td>
+                                    <td>{{ computador.numero_identificacao }}</td>
+                                    <td>{{ computador.sala.numero }}</td>
+                                    <td class="text-end">{{ computador.num_anomalias }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Nenhum computador com anomalias registadas.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </article>
-
-            <article class="card stats-compact-card">
-                <div class="card-header">
-                    <h5 class="mb-0">Computadores com mais ocorr&ecirc;ncias</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-card admin-table-card">
-                        <div class="table-responsive">
-                            <table class="table admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Posi&ccedil;&atilde;o</th>
-                                        <th>Computador</th>
-                                        <th>Sala</th>
-                                        <th class="text-end">Total de Anomalias</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for computador in computadores_problematicos %}
-                                    <tr>
-                                        <td><span class="table-rank">{{ forloop.counter }}</span></td>
-                                        <td>{{ computador.numero_identificacao }}</td>
-                                        <td>{{ computador.sala.numero }}</td>
-                                        <td class="text-end">{{ computador.num_anomalias }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center">Nenhum computador com anomalias registadas.</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        </div>
-    </div>
+            </div>
+        </article>
+    </section>
 </div>
 {% endblock %}
 

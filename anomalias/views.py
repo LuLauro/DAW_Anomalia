@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -78,8 +79,12 @@ def lista_anomalias(request):
     else:
         anomalias = anomalias.order_by("-data_registo")
 
+    paginator = Paginator(anomalias, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
     context = {
-        "anomalias": anomalias,
+        "anomalias": page_obj.object_list,
+        "page_obj": page_obj,
         "form": form,
         "can_delete_resolved": is_admin(request.user),
     }

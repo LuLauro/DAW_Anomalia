@@ -32,36 +32,50 @@
 
 <div class="table-card">
     <div class="table-responsive">
-        <table class="table">
+        <table class="table anomaly-table">
             <thead>
                 <tr>
                     <th>Título</th>
-                    <th>Computador</th>
                     <th>Sala</th>
+                    <th>Estado</th>
+                    <th>Prioridade</th>
+                    <th>Reportado por</th>
+                    <th>Data de Registo</th>
                     <th>Data de Resolução</th>
-                    <th>Observações</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for anomalia in anomalias %}
-                <tr>
+                <tr class="anomaly-row anomaly-row-{{ anomalia.estado|lower }}">
                     <td>{{ anomalia.titulo }}</td>
-                    <td>{{ anomalia.computador|default:"-" }}</td>
                     <td>
                         {% if anomalia.computador %}
                             {{ anomalia.computador.sala.numero }}
                         {% elif anomalia.sala %}
                             {{ anomalia.sala.numero }}
                         {% else %}
-                            -
+                            <em>Não definida</em>
                         {% endif %}
                     </td>
+                    <td>
+                        <span class="status-badge status-badge-{{ anomalia.estado|lower }}">{{ anomalia.get_estado_display }}</span>
+                    </td>
+                    <td>
+                        {% include "partials/priority_badge.html" with prioridade=anomalia.prioridade label=anomalia.get_prioridade_display %}
+                    </td>
+                    <td>{{ anomalia.reportado_por.username }}</td>
+                    <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
                     <td>{{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</td>
-                    <td>{{ anomalia.observacoes|default:"-" }}</td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-info">Detalhes</a>
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">Nenhuma anomalia resolvida encontrada.</td>
+                    <td colspan="8" class="text-center">Nenhuma anomalia resolvida encontrada.</td>
                 </tr>
                 {% endfor %}
             </tbody>
