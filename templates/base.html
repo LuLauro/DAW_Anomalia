@@ -37,6 +37,13 @@
                     </a>
                     {% endif %}
 
+                    {% if user|has_group:"Administrador" or user.is_superuser %}
+                    <a class="sidebar-link {% if request.resolver_match.namespace == 'user_management' %}is-active{% endif %}" href="{% url 'user_management:lista_utilizadores' %}">
+                        <i class="fas fa-users"></i>
+                        <span>Utilizadores</span>
+                    </a>
+                    {% endif %}
+
                     <a class="sidebar-link {% if request.resolver_match.namespace == 'anomalias' and request.resolver_match.url_name != 'historico_anomalias' %}is-active{% endif %}" href="{% url 'anomalias:lista_anomalias' %}">
                         <i class="fas fa-triangle-exclamation"></i>
                         <span>Anomalias</span>

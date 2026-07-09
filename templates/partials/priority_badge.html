@@ -1,9 +1,9 @@
 {% if prioridade == "CRITICA" %}
-<span class="badge bg-danger">{{ label|default:"Crítica" }}</span>
+<span class="badge bg-danger">{{ label|default:"Cr&iacute;tica" }}</span>
 {% elif prioridade == "ALTA" %}
 <span class="badge" style="background-color: #fd7e14; color: #fff;">{{ label|default:"Alta" }}</span>
 {% elif prioridade == "MEDIA" %}
-<span class="badge" style="background-color: #ffc107; color: #212529;">{{ label|default:"Média" }}</span>
+<span class="badge" style="background-color: #ffc107; color: #212529;">{{ label|default:"M&eacute;dia" }}</span>
 {% else %}
 <span class="badge bg-success">{{ label|default:"Baixa" }}</span>
 {% endif %}

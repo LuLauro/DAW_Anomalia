@@ -32,11 +32,13 @@
             <span class="badge-soft">Nova</span>
             {% endif %}
         </div>
+        {% if not notification.is_read %}
         <div class="notification-footer">
             <a href="{% url 'notificacoes:mark_as_read' notification.id %}" class="btn btn-sm btn-primary">
                 <i class="fas fa-check me-2"></i>Marcar como lida
             </a>
         </div>
+        {% endif %}
     </article>
     {% endfor %}
 {% else %}

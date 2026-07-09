@@ -117,6 +117,7 @@ class Perfil(models.Model):
         ("PROF", "Professor"),
         ("COORD", "Coordenador"),
         ("ADMIN", "Administrador"),
+        ("TEC", "Técnico"),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

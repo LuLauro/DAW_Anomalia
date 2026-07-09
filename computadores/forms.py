@@ -15,6 +15,14 @@ class ComputadorForm(forms.ModelForm):
         model = Computador
         fields = ['numero_identificacao', 'sala', 'marca',
                   'modelo', 'data_aquisicao', 'observacoes']
+        labels = {
+            'numero_identificacao': 'Número de Identificação',
+            'sala': 'Sala',
+            'marca': 'Marca',
+            'modelo': 'Modelo',
+            'data_aquisicao': 'Data de Aquisição',
+            'observacoes': 'Observações',
+        }
         widgets = {
             'data_aquisicao': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),

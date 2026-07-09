@@ -103,6 +103,13 @@ class AnomaliaForm(forms.ModelForm):
     class Meta:
         model = Anomalia
         fields = ["titulo", "descricao", "prioridade", "sala", "computador"]
+        labels = {
+            "titulo": "Título",
+            "descricao": "Descrição",
+            "prioridade": "Prioridade",
+            "sala": "Sala",
+            "computador": "Computador",
+        }
         widgets = {
             "titulo": forms.TextInput(attrs=BASE_WIDGETS),
             "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),
@@ -214,6 +221,13 @@ class AnomaliaGeralForm(forms.ModelForm):
     class Meta:
         model = Anomalia
         fields = ["titulo", "descricao", "prioridade", "sala", "tipo"]
+        labels = {
+            "titulo": "Título",
+            "descricao": "Descrição",
+            "prioridade": "Prioridade",
+            "sala": "Sala",
+            "tipo": "Tipo",
+        }
         widgets = {
             "titulo": forms.TextInput(attrs=BASE_WIDGETS),
             "descricao": forms.Textarea(attrs={**BASE_WIDGETS, "rows": 3}),

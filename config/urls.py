@@ -17,6 +17,7 @@ urlpatterns = [
     path('tecnico/', include('tecnico.urls')),
     path('relatorios/', include('relatorios.urls')),
     path('ai/', include('ai_agent.urls')),
+    path('', include(('users.management_urls', 'user_management'), namespace='user_management')),
 
     # Users app handles login/logout/signup/password reset
     path('users/', include(('users.urls', 'users'), namespace='users')),

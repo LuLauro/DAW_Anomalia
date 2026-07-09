@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Utilizadores{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb app-breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Gestão de Utilizadores</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h2>Gestão de Utilizadores</h2>
+        <p>Crie, edite e gira o acesso dos utilizadores da plataforma.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'user_management:novo_utilizador' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Novo Utilizador
+        </a>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-search me-2"></i>Pesquisar</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="{{ search_form.pesquisa.id_for_label }}" class="form-label">{{ search_form.pesquisa.label }}</label>
+                {{ search_form.pesquisa }}
+            </div>
+            <div class="col-md-4 form-row-actions">
+                <button type="submit" class="btn btn-secondary">Pesquisar</button>
+                <a href="{% url 'user_management:lista_utilizadores' %}" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Perfil</th>
+                    <th>Estado</th>
+                    <th>Data de criação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for utilizador in utilizadores %}
+                <tr>
+                    <td>{{ utilizador.get_full_name|default:"-" }}</td>
+                    <td>{{ utilizador.username }}</td>
+                    <td>{{ utilizador.email|default:"-" }}</td>
+                    <td>
+                        <span class="badge text-bg-light border">{{ utilizador.perfil_label }}</span>
+                    </td>
+                    <td>
+                        {% if utilizador.is_active %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ utilizador.date_joined|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="{% url 'user_management:editar_utilizador' utilizador.id %}" class="btn btn-sm btn-info">Editar</a>
+                            <form method="post" action="{% url 'user_management:alterar_estado_utilizador' utilizador.id %}">
+                                {% csrf_token %}
+                                {% if utilizador.is_active %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Desativar</button>
+                                {% else %}
+                                <button type="submit" class="btn btn-sm btn-outline-success">Ativar</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Nenhum utilizador encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Paginação de utilizadores" class="mt-4">
+    <ul class="pagination app-pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Seguinte</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Seguinte</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
