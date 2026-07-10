@@ -34,37 +34,35 @@
 </div>
 
 <div class="table-card">
-    <div class="table-responsive">
-        <table class="table">
+    <div class="table-responsive user-management-responsive">
+        <table class="table admin-table user-management-table">
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Username</th>
                     <th>Email</th>
                     <th>Perfil</th>
                     <th>Estado</th>
-                    <th>Data de criação</th>
-                    <th>Ações</th>
+                    <th>Data de Criação</th>
+                    <th class="user-col-actions-header">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for utilizador in utilizadores %}
                 <tr>
-                    <td>{{ utilizador.get_full_name|default:"-" }}</td>
-                    <td>{{ utilizador.username }}</td>
-                    <td>{{ utilizador.email|default:"-" }}</td>
-                    <td>
+                    <td class="user-col-name">{{ utilizador.get_full_name|default:"-" }}</td>
+                    <td class="user-col-email">{{ utilizador.email|default:"-" }}</td>
+                    <td class="user-col-profile">
                         <span class="badge text-bg-light border">{{ utilizador.perfil_label }}</span>
                     </td>
-                    <td>
+                    <td class="user-col-status">
                         {% if utilizador.is_active %}
                         <span class="badge bg-success">Ativo</span>
                         {% else %}
                         <span class="badge bg-secondary">Inativo</span>
                         {% endif %}
                     </td>
-                    <td>{{ utilizador.date_joined|date:"d/m/Y H:i" }}</td>
-                    <td>
+                    <td class="user-col-date">{{ utilizador.date_joined|date:"d/m/Y" }}</td>
+                    <td class="user-col-actions">
                         <div class="table-actions">
                             <a href="{% url 'user_management:editar_utilizador' utilizador.id %}" class="btn btn-sm btn-info">Editar</a>
                             <form method="post" action="{% url 'user_management:alterar_estado_utilizador' utilizador.id %}">
@@ -80,7 +78,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">Nenhum utilizador encontrado.</td>
+                    <td colspan="6" class="text-center">Nenhum utilizador encontrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -284,25 +284,46 @@ def qrcode_kit_pdf(request):
 @login_required
 def gerar_relatorio_pdf(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
+        messages.error(
+            request,
+            "Acesso restrito a Administrador, Coordenador ou Técnico.",
+        )
         return redirect("anomalias:lista_anomalias")
 
     periodo = request.GET.get("periodo", "semana_atual")
     data_inicio_raw = request.GET.get("data_inicio")
     data_fim_raw = request.GET.get("data_fim")
-    inicio, fim = _periodo_datas(periodo, data_inicio_raw, data_fim_raw)
+
+    inicio, fim = _periodo_datas(
+        periodo,
+        data_inicio_raw,
+        data_fim_raw,
+    )
 
     if not inicio or not fim:
         messages.error(request, "Intervalo de datas inválido.")
         return redirect("relatorios:form")
 
+    from datetime import datetime, time
+
+    inicio_dt = timezone.make_aware(
+        datetime.combine(inicio, time.min)
+    )
+
+    fim_dt = timezone.make_aware(
+        datetime.combine(fim, time.max)
+    )
+
     filtros = _anomalia_relatorio_filtro_base() & Q(
-        data_registo__date__range=(inicio, fim)
+        data_registo__range=(inicio_dt, fim_dt)
     )
 
     sala_id = request.GET.get("sala")
     if sala_id:
-        filtros &= Q(sala_id=sala_id) | Q(computador__sala_id=sala_id)
+        filtros &= (
+            Q(sala_id=sala_id)
+            | Q(computador__sala_id=sala_id)
+        )
 
     estado = request.GET.get("estado")
     if estado:
@@ -318,18 +339,31 @@ def gerar_relatorio_pdf(request):
 
     anomalias = filter_anomalias_for_user(
         Anomalia.objects.filter(filtros)
-        .select_related("computador", "sala", "reportado_por")
+        .select_related(
+            "computador",
+            "sala",
+            "reportado_por",
+        )
         .order_by("-data_registo"),
         request.user,
     )
 
     total_anomalias = anomalias.count()
-    total_resolvidas = anomalias.filter(estado="RESOLVIDO").count()
-    total_pendentes = anomalias.filter(estado="PENDENTE").count()
+    total_resolvidas = anomalias.filter(
+        estado="RESOLVIDO"
+    ).count()
+    total_pendentes = anomalias.filter(
+        estado="PENDENTE"
+    ).count()
+
     tempo_medio = _tempo_medio_resolucao(anomalias)
+
     anomalias = _attach_priority_style(anomalias)
 
-    is_coordenador = request.user.groups.filter(name="Coordenador").exists()
+    is_coordenador = request.user.groups.filter(
+        name="Coordenador"
+    ).exists()
+
     context = {
         "instituicao_nome": "Instituição de Ensino",
         "data_geracao": timezone.now(),
@@ -344,19 +378,33 @@ def gerar_relatorio_pdf(request):
         "mostrar_observacoes": False,
     }
 
-    template = get_template("relatorios/relatorio_pdf.html")
-    html = template.render(context)
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=relatorio_anomalias.pdf"
+    template = get_template(
+        "relatorios/relatorio_pdf.html"
+    )
 
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err:  # type: ignore
-        messages.error(request, "Não foi possível gerar o PDF.")
+    html = template.render(context)
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response[
+        "Content-Disposition"
+    ] = "inline; filename=relatorio_anomalias.pdf"
+
+    pisa_status = pisa.CreatePDF(
+        html,
+        dest=response,
+    )
+
+    if pisa_status.err:
+        messages.error(
+            request,
+            "Não foi possível gerar o PDF."
+        )
         return redirect("relatorios:form")
 
-    messages.success(request, "Relatório gerado com sucesso.")
     return response
-
 
 @login_required
 def relatorio_semanal_pdf(request):
