@@ -3,8 +3,10 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Q
 
 from anomalias.models import Perfil
+from salas.models import Sala
 
 from .models import PerfilCoordenador
 
@@ -141,15 +143,25 @@ class BaseUserManagementForm(forms.Form):
         choices=[("ativo", "Ativo"), ("inativo", "Inativo")],
         widget=forms.Select(attrs={"class": "form-select"}),
     )
+    salas_atribuidas = forms.ModelMultipleChoiceField(
+        queryset=Sala.objects.none(),
+        required=False,
+        label="Salas atribuídas",
+        widget=forms.CheckboxSelectMultiple(),
+    )
 
     def __init__(self, *args, user_instance=None, **kwargs):
         self.user_instance = user_instance
         super().__init__(*args, **kwargs)
+        self.fields["salas_atribuidas"].queryset = Sala.objects.filter(
+            Q(coordinator__isnull=True)
+            | Q(coordinator=user_instance)
+        ).order_by("numero")
         if user_instance is not None:
             self.fields["nome"].initial = user_instance.get_full_name() or user_instance.first_name
             self.fields["username"].initial = user_instance.username
             self.fields["email"].initial = user_instance.email
-            self.fields["perfil"].initial = next(
+            perfil_inicial = next(
                 (
                     choice[0]
                     for choice in PROFILE_GROUP_CHOICES
@@ -157,7 +169,20 @@ class BaseUserManagementForm(forms.Form):
                 ),
                 "Professor",
             )
+            self.fields["perfil"].initial = perfil_inicial
             self.fields["estado"].initial = "ativo" if user_instance.is_active else "inativo"
+            if perfil_inicial == "Coordenador":
+                self.fields["salas_atribuidas"].initial = Sala.objects.filter(
+                    coordinator=user_instance
+                ).values_list("pk", flat=True)
+        elif self.initial.get("perfil") == "Coordenador" and self.initial.get("salas_atribuidas"):
+            self.fields["salas_atribuidas"].initial = self.initial["salas_atribuidas"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("perfil") != "Coordenador":
+            cleaned_data["salas_atribuidas"] = self.fields["salas_atribuidas"].queryset.none()
+        return cleaned_data
 
     def clean_username(self):
         username = (self.cleaned_data.get("username") or "").strip()
@@ -176,6 +201,16 @@ class BaseUserManagementForm(forms.Form):
         user.email = self.cleaned_data.get("email", "").strip()
         user.is_active = self.cleaned_data["estado"] == "ativo"
         return user
+
+    def sync_assigned_room(self, user):
+        if self.cleaned_data["perfil"] != "Coordenador":
+            return
+        profile, _ = PerfilCoordenador.objects.get_or_create(user=user)
+        salas = self.cleaned_data.get("salas_atribuidas")
+        if salas:
+            profile.salas.set(salas)
+        else:
+            profile.salas.clear()
 
 
 class UserCreateForm(BaseUserManagementForm):
@@ -214,6 +249,7 @@ class UserCreateForm(BaseUserManagementForm):
         user = self.save_common_fields(user)
         user.save(update_fields=["first_name", "last_name", "username", "email", "is_active"])
         sync_user_profile(user, self.cleaned_data["perfil"])
+        self.sync_assigned_room(user)
         return user
 
 
@@ -251,4 +287,5 @@ class UserUpdateForm(BaseUserManagementForm):
             user.set_password(password)
         user.save()
         sync_user_profile(user, self.cleaned_data["perfil"])
+        self.sync_assigned_room(user)
         return user

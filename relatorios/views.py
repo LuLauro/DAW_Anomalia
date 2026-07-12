@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 from xhtml2pdf import pisa
 
+from auditoria.services import log_action
 from anomalias.qr_utils import (
     build_computador_anomalia_url,
     build_qr_code_data_uri,
@@ -267,7 +268,15 @@ def qrcode_kit_pdf(request):
         "items": items,
         "generated_at": timezone.now(),
     }
-
+    log_action(
+        request=request,
+        action="IMPRIMIR_QR_CODES",
+        entity="QR Codes",
+        description=(
+            f"Página de impressão de QR Codes aberta. "
+            f"Tipo: {qr_type}. Sala: {sala_id or 'todas'}."
+        ),
+    )
     return render(request, "relatorios/qrcode_kit_pdf.html", context)
 
 
@@ -345,6 +354,9 @@ def gerar_relatorio_pdf(request):
     total_pendentes = anomalias.filter(
         estado="PENDENTE"
     ).count()
+    total_em_resolucao = anomalias.filter(
+        estado="EM_RESOLUCAO"
+    ).count()
 
     tempo_medio = _tempo_medio_resolucao(anomalias)
 
@@ -354,6 +366,16 @@ def gerar_relatorio_pdf(request):
         name="Coordenador"
     ).exists()
 
+    sala_label = "Todas"
+    if sala_id:
+        sala_obj = Sala.objects.filter(pk=sala_id).only("numero").first()
+        if sala_obj:
+            sala_label = f"Sala {sala_obj.numero}"
+
+    estado_label = dict(Anomalia.ESTADO_CHOICES).get(estado, "Todos")
+    prioridade_label = dict(Anomalia.PRIORIDADE_CHOICES).get(prioridade, "Todas")
+    tipo_label = dict(Anomalia._meta.get_field("tipo").choices).get(tipo, "Todos")
+
     context = {
         "instituicao_nome": "InstituiÃ§Ã£o de Ensino",
         "data_geracao": timezone.now(),
@@ -362,10 +384,16 @@ def gerar_relatorio_pdf(request):
         "total_anomalias": total_anomalias,
         "total_resolvidas": total_resolvidas,
         "total_pendentes": total_pendentes,
+        "total_em_resolucao": total_em_resolucao,
         "tempo_medio_resolucao": tempo_medio,
         "anomalias": anomalias,
         "mostrar_reportado_por": not is_coordenador,
         "mostrar_observacoes": False,
+        "filtro_periodo": f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}",
+        "filtro_sala": sala_label,
+        "filtro_estado": estado_label,
+        "filtro_prioridade": prioridade_label,
+        "filtro_tipo": tipo_label,
     }
 
     template = get_template(
@@ -394,6 +422,17 @@ def gerar_relatorio_pdf(request):
         )
         return redirect("relatorios:form")
 
+    log_action(
+        request=request,
+        action="GERAR_RELATORIO",
+        entity="Relatório de Anomalias",
+        description=(
+            "Relatório gerado com filtros: "
+            f"período={inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}, "
+            f"sala={sala_label}, estado={estado_label}, "
+            f"prioridade={prioridade_label}, tipo={tipo_label}."
+        ),
+    )
     return response
 
 @login_required
@@ -483,5 +522,14 @@ def relatorio_semanal_pdf(request):
         messages.error(request, "NÃ£o foi possÃ­vel gerar o PDF semanal.")
         return redirect("relatorios:form")
 
+    log_action(
+        request=request,
+        action="GERAR_RELATORIO",
+        entity="Relatório Semanal",
+        description=(
+            f"Relatório semanal gerado para o período "
+            f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}."
+        ),
+    )
     return response
 

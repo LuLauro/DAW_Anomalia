@@ -15,7 +15,7 @@
         <h5 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Parâmetros do relatório</h5>
     </div>
     <div class="card-body">
-        <form method="get" action="{% url 'relatorios:gerar_pdf' %}" class="row g-3">
+        <form method="get" action="{% url 'relatorios:gerar_pdf' %}" class="row g-3" target="_blank" rel="noopener">
             <div class="col-md-6">
                 <label for="periodo" class="form-label">Período</label>
                 <select id="periodo" name="periodo" class="form-select">

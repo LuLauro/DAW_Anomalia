@@ -4,6 +4,7 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 
 from anomalias.models import Anomalia
+from auditoria.services import log_action
 from users.permissions import group_required, is_admin, is_tecnico
 
 
@@ -127,12 +128,22 @@ def atualizar_estado(request, pk):
         messages.error(request, "Transição de estado inválida.")
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
+    estado_anterior = anomalia.get_estado_display()
     if estado_pedido == "RESOLVIDO":
         anomalia.marcar_resolvido()
     else:
         anomalia.estado = estado_pedido
         anomalia.save()
 
+    log_action(
+        request=request,
+        action="ALTERAR_ESTADO_ANOMALIA",
+        entity=anomalia,
+        description=(
+            f"Estado da anomalia '{anomalia.titulo}' alterado de "
+            f"{estado_anterior} para {anomalia.get_estado_display()} pelo técnico."
+        ),
+    )
     messages.success(request, "Estado atualizado com sucesso.")
     return redirect("tecnico:detalhe_anomalia", pk=pk)
 
@@ -160,5 +171,11 @@ def adicionar_observacao(request, pk):
         return redirect("tecnico:detalhe_anomalia", pk=pk)
 
     anomalia.adicionar_observacao(observacao)
+    log_action(
+        request=request,
+        action="ADICIONAR_OBSERVACAO_ANOMALIA",
+        entity=anomalia,
+        description=f"Observação adicionada à anomalia '{anomalia.titulo}'.",
+    )
     messages.success(request, "Observação adicionada com sucesso.")
     return redirect("tecnico:detalhe_anomalia", pk=pk)

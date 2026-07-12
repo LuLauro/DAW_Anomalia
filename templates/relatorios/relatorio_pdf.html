@@ -4,78 +4,306 @@
     <meta charset="UTF-8">
     <title>Relatório de Anomalias</title>
     <style>
+        @page {
+            size: A4;
+            margin: 1.2cm 1cm 1.4cm;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: #222;
+            font-size: 11px;
+            color: #1f2937;
         }
-        .header {
+
+        .page-header {
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dbe3ec;
             text-align: center;
-            margin-bottom: 20px;
         }
-        .header h1 {
+
+        .brand-mark {
+            width: 26px;
+            height: 26px;
+            margin: 0 auto 8px;
+            border: 1px solid #dbe3ec;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .brand-title {
             margin: 0;
-            font-size: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #0f172a;
         }
-        .header p {
-            margin: 2px 0;
+
+        .brand-subtitle {
+            margin: 4px 0 0;
+            font-size: 13px;
+            color: #475569;
         }
-        .summary {
-            margin-bottom: 20px;
+
+        .brand-meta {
+            margin-top: 6px;
+            font-size: 10px;
+            color: #64748b;
         }
-        .summary table {
+
+        .kpi-table,
+        .filter-table,
+        .report-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
         }
-        .summary td {
-            padding: 6px;
-            border: 1px solid #ddd;
+
+        .kpi-section {
+            margin-bottom: 16px;
         }
-        table.list {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table.list th,
-        table.list td {
-            border: 1px solid #ddd;
-            padding: 6px;
+
+        .kpi-table td {
+            width: 25%;
+            padding-right: 10px;
             vertical-align: top;
         }
-        table.list th {
-            background: #f2f2f2;
+
+        .kpi-table td:last-child {
+            padding-right: 0;
         }
-        .muted {
-            color: #666;
+
+        .kpi-card {
+            border: 1px solid #dbe3ec;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: #ffffff;
         }
-        .priority-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 999px;
+
+        .kpi-card-total {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .kpi-card-pending {
+            background: #fff7ed;
+            border-color: #fdba74;
+        }
+
+        .kpi-card-progress {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .kpi-card-resolved {
+            background: #ecfdf5;
+            border-color: #86efac;
+        }
+
+        .kpi-value {
+            margin: 0 0 4px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .kpi-label {
+            margin: 0;
+            font-size: 11px;
+            color: #475569;
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .filter-box {
+            margin-bottom: 16px;
+            border: 1px solid #dbe3ec;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: #ffffff;
+        }
+
+        .filter-table td {
+            width: 20%;
+            padding-right: 10px;
+            vertical-align: top;
+        }
+
+        .filter-table td:last-child {
+            padding-right: 0;
+        }
+
+        .filter-label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .filter-value {
+            font-size: 11px;
+            color: #1f2937;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .report-table th {
+            background: #f3f4f6;
+            color: #374151;
             font-size: 10px;
             font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .report-table tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        .report-table td.text-left {
+            text-align: left;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .badge-priority-critical {
+            background: #dc2626;
+            color: #ffffff;
+        }
+
+        .badge-priority-high {
+            background: #f97316;
+            color: #ffffff;
+        }
+
+        .badge-priority-medium {
+            background: #facc15;
+            color: #1f2937;
+        }
+
+        .badge-priority-low {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .badge-state-pending {
+            background: #f97316;
+            color: #ffffff;
+        }
+
+        .badge-state-progress {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .badge-state-resolved {
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #64748b;
+            padding: 16px 10px;
+        }
+
+        .page-footer {
+            position: fixed;
+            bottom: -0.8cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>{{ instituicao_nome }}</h1>
-        <p>Relatório de anomalias</p>
-        <p class="muted">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
-        <p class="muted">Período: {{ periodo_inicio|date:"d/m/Y" }} a {{ periodo_fim|date:"d/m/Y" }}</p>
+    <div class="page-header">
+        <div class="brand-mark"></div>
+        <p class="brand-title">Gestão de Anomalias</p>
+        <p class="brand-subtitle">Relatório de Anomalias</p>
+        <p class="brand-meta">Gerado em {{ data_geracao|date:"d/m/Y H:i" }}</p>
     </div>
 
-    <div class="summary">
-        <table>
+    <div class="kpi-section">
+        <table class="kpi-table">
             <tr>
-                <td><strong>Total de anomalias</strong><br>{{ total_anomalias }}</td>
-                <td><strong>Resolvidas</strong><br>{{ total_resolvidas }}</td>
-                <td><strong>Pendentes</strong><br>{{ total_pendentes }}</td>
-                <td><strong>Tempo médio de resolução</strong><br>{{ tempo_medio_resolucao }}</td>
+                <td>
+                    <div class="kpi-card kpi-card-total">
+                        <p class="kpi-value">{{ total_anomalias }}</p>
+                        <p class="kpi-label">Total</p>
+                    </div>
+                </td>
+                <td>
+                    <div class="kpi-card kpi-card-pending">
+                        <p class="kpi-value">{{ total_pendentes }}</p>
+                        <p class="kpi-label">Pendentes</p>
+                    </div>
+                </td>
+                <td>
+                    <div class="kpi-card kpi-card-progress">
+                        <p class="kpi-value">{{ total_em_resolucao }}</p>
+                        <p class="kpi-label">Em Resolução</p>
+                    </div>
+                </td>
+                <td>
+                    <div class="kpi-card kpi-card-resolved">
+                        <p class="kpi-value">{{ total_resolvidas }}</p>
+                        <p class="kpi-label">Resolvidas</p>
+                    </div>
+                </td>
             </tr>
         </table>
     </div>
 
-    <table class="list">
+    <div class="filter-box">
+        <p class="section-title">Filtros Utilizados</p>
+        <table class="filter-table">
+            <tr>
+                <td>
+                    <span class="filter-label">Período</span>
+                    <span class="filter-value">{{ filtro_periodo }}</span>
+                </td>
+                <td>
+                    <span class="filter-label">Sala</span>
+                    <span class="filter-value">{{ filtro_sala }}</span>
+                </td>
+                <td>
+                    <span class="filter-label">Estado</span>
+                    <span class="filter-value">{{ filtro_estado }}</span>
+                </td>
+                <td>
+                    <span class="filter-label">Prioridade</span>
+                    <span class="filter-value">{{ filtro_prioridade }}</span>
+                </td>
+                <td>
+                    <span class="filter-label">Tipo</span>
+                    <span class="filter-value">{{ filtro_tipo }}</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="report-table">
         <thead>
             <tr>
                 <th>Título</th>
@@ -93,15 +321,26 @@
         <tbody>
             {% for anomalia in anomalias %}
             <tr>
-                <td>{{ anomalia.titulo }}</td>
-                <td>{{ anomalia.get_estado_display }}</td>
+                <td class="text-left">{{ anomalia.titulo }}</td>
                 <td>
-                    <span
-                        class="priority-badge"
-                        style="background-color: {{ anomalia.priority_style.bg }}; color: {{ anomalia.priority_style.fg }};"
-                    >
-                        {{ anomalia.get_prioridade_display }}
-                    </span>
+                    {% if anomalia.estado == "PENDENTE" %}
+                    <span class="badge badge-state-pending">{{ anomalia.get_estado_display }}</span>
+                    {% elif anomalia.estado == "EM_RESOLUCAO" %}
+                    <span class="badge badge-state-progress">{{ anomalia.get_estado_display }}</span>
+                    {% else %}
+                    <span class="badge badge-state-resolved">{{ anomalia.get_estado_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if anomalia.prioridade == "CRITICA" %}
+                    <span class="badge badge-priority-critical">{{ anomalia.get_prioridade_display }}</span>
+                    {% elif anomalia.prioridade == "ALTA" %}
+                    <span class="badge badge-priority-high">{{ anomalia.get_prioridade_display }}</span>
+                    {% elif anomalia.prioridade == "MEDIA" %}
+                    <span class="badge badge-priority-medium">{{ anomalia.get_prioridade_display }}</span>
+                    {% else %}
+                    <span class="badge badge-priority-low">{{ anomalia.get_prioridade_display }}</span>
+                    {% endif %}
                 </td>
                 <td>
                     {% if anomalia.computador %}
@@ -133,10 +372,14 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="{% if mostrar_reportado_por %}8{% else %}7{% endif %}">Sem anomalias no período.</td>
+                <td colspan="{% if mostrar_reportado_por %}8{% else %}7{% endif %}" class="empty-row">Sem anomalias no período.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="page-footer">
+        Gestão de Anomalias · Página <pdf:pagenumber /> de <pdf:pagecount />
+    </div>
 </body>
 </html>

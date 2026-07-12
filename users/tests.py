@@ -120,6 +120,34 @@ class UserManagementViewsTests(TestCase):
         self.assertTrue(PerfilCoordenador.objects.filter(user=user).exists())
         self.assertEqual(Perfil.objects.get(user=user).tipo, "COORD")
 
+    def test_create_coordinator_assigns_selected_rooms(self):
+        sala = Sala.objects.create(numero="C3.1")
+        sala_extra = Sala.objects.create(numero="C3.4")
+        self.client.force_login(self.admin_user)
+
+        response = self.client.post(
+            reverse("user_management:novo_utilizador"),
+            {
+                "nome": "Coordenador Sala",
+                "username": "coord-sala",
+                "email": "coordsala@example.com",
+                "password": "secret12345",
+                "confirm_password": "secret12345",
+                "perfil": "Coordenador",
+                "estado": "ativo",
+                "salas_atribuidas": [str(sala.pk), str(sala_extra.pk)],
+            },
+        )
+
+        self.assertRedirects(response, reverse("user_management:lista_utilizadores"))
+        user = User.objects.get(username="coord-sala")
+        sala.refresh_from_db()
+        sala_extra.refresh_from_db()
+        self.assertEqual(sala.coordinator, user)
+        self.assertEqual(sala_extra.coordinator, user)
+        self.assertTrue(user.perfil_coordenador.salas.filter(pk=sala.pk).exists())
+        self.assertTrue(user.perfil_coordenador.salas.filter(pk=sala_extra.pk).exists())
+
     def test_create_tecnico_user_creates_legacy_profile(self):
         self.client.force_login(self.admin_user)
 
@@ -166,6 +194,41 @@ class UserManagementViewsTests(TestCase):
         target_user.refresh_from_db()
         self.assertTrue(target_user.check_password("old-secret-123"))
         self.assertEqual(target_user.email, "edit@example.com")
+
+    def test_edit_coordinator_updates_assigned_rooms(self):
+        target_user = User.objects.create_user(
+            username="coord-edit",
+            password="secret123",
+            first_name="Coord",
+        )
+        target_user.groups.add(self.coordinator_group)
+        PerfilCoordenador.objects.create(user=target_user)
+        sala_inicial = Sala.objects.create(numero="C3.2", coordinator=target_user)
+        sala_nova = Sala.objects.create(numero="C3.3")
+        sala_extra = Sala.objects.create(numero="C3.5")
+
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            reverse("user_management:editar_utilizador", args=[target_user.pk]),
+            {
+                "nome": "Coord Editado",
+                "username": "coord-edit",
+                "email": "coordedit@example.com",
+                "perfil": "Coordenador",
+                "estado": "ativo",
+                "salas_atribuidas": [str(sala_nova.pk), str(sala_extra.pk)],
+                "password": "",
+                "confirm_password": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("user_management:lista_utilizadores"))
+        sala_inicial.refresh_from_db()
+        sala_nova.refresh_from_db()
+        sala_extra.refresh_from_db()
+        self.assertIsNone(sala_inicial.coordinator)
+        self.assertEqual(sala_nova.coordinator, target_user)
+        self.assertEqual(sala_extra.coordinator, target_user)
 
     def test_toggle_user_status_updates_is_active(self):
         target_user = User.objects.create_user(username="toggle-me", password="secret123")

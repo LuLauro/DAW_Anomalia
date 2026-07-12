@@ -11,6 +11,7 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 
+from auditoria.services import log_action
 from users.permissions import is_admin, is_coordenador, is_professor, is_tecnico
 
 from .forms import (
@@ -129,7 +130,13 @@ def novo_utilizador(request):
     if request.method == "POST":
         form = UserCreateForm(request.POST)
         if form.is_valid():
-            form.save()
+            utilizador = form.save()
+            log_action(
+                request=request,
+                action="CRIAR_UTILIZADOR",
+                entity=utilizador,
+                description=f"Utilizador criado: {utilizador.username}.",
+            )
             messages.success(request, "Utilizador criado com sucesso.")
             return redirect("user_management:lista_utilizadores")
         messages.error(request, "Não foi possível criar o utilizador.")
@@ -155,7 +162,13 @@ def editar_utilizador(request, user_id):
     if request.method == "POST":
         form = UserUpdateForm(request.POST, user_instance=utilizador)
         if form.is_valid():
-            form.save()
+            utilizador = form.save()
+            log_action(
+                request=request,
+                action="EDITAR_UTILIZADOR",
+                entity=utilizador,
+                description=f"Utilizador editado: {utilizador.username}.",
+            )
             messages.success(request, "Utilizador atualizado com sucesso.")
             return redirect("user_management:lista_utilizadores")
         messages.error(request, "Não foi possível atualizar o utilizador.")
@@ -183,6 +196,15 @@ def alterar_estado_utilizador(request, user_id):
     utilizador = get_object_or_404(User, pk=user_id)
     utilizador.is_active = not utilizador.is_active
     utilizador.save(update_fields=["is_active"])
+    log_action(
+        request=request,
+        action="ALTERAR_ESTADO_UTILIZADOR",
+        entity=utilizador,
+        description=(
+            f"Utilizador {utilizador.username} "
+            f"{'ativado' if utilizador.is_active else 'desativado'}."
+        ),
+    )
 
     estado = "ativado" if utilizador.is_active else "desativado"
     messages.success(request, f"Utilizador {estado} com sucesso.")

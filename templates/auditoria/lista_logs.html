@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Auditoria{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Auditoria</h2>
+        <p>Consulte quem executou cada ação, quando e sobre que entidade.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="id_pesquisa" class="form-label">Pesquisar</label>
+                <input
+                    type="text"
+                    id="id_pesquisa"
+                    name="pesquisa"
+                    value="{{ pesquisa }}"
+                    class="form-control"
+                    placeholder="Descrição, entidade ou utilizador"
+                >
+            </div>
+            <div class="col-md-3">
+                <label for="id_utilizador" class="form-label">Utilizador</label>
+                <select id="id_utilizador" name="utilizador" class="form-select">
+                    <option value="">Todos</option>
+                    {% for utilizador in utilizadores %}
+                    <option value="{{ utilizador.pk }}" {% if utilizador_id == utilizador.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ utilizador.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="id_acao" class="form-label">Ação</label>
+                <select id="id_acao" name="acao" class="form-select">
+                    <option value="">Todas</option>
+                    {% for acao in acoes %}
+                    <option value="{{ acao }}" {% if acao_selecionada == acao %}selected{% endif %}>
+                        {{ acao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="id_data_inicio" class="form-label">Data de início</label>
+                <input type="date" id="id_data_inicio" name="data_inicio" value="{{ data_inicio }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label for="id_data_fim" class="form-label">Data de fim</label>
+                <input type="date" id="id_data_fim" name="data_fim" value="{{ data_fim }}" class="form-control">
+            </div>
+            <div class="col-12 form-row-actions">
+                <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                <a href="{% url 'auditoria:lista_logs' %}" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Utilizador</th>
+                    <th>Ação</th>
+                    <th>Entidade</th>
+                    <th>ID</th>
+                    <th>Endereço IP</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.data_hora|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ log.utilizador.username|default:"-" }}</td>
+                    <td>{{ log.acao }}</td>
+                    <td>{{ log.entidade }}</td>
+                    <td>{{ log.entidade_id|default:"-" }}</td>
+                    <td>{{ log.endereco_ip|default:"-" }}</td>
+                    <td>{{ log.descricao }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Sem registos de auditoria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Paginação de auditoria" class="mt-4">
+    <ul class="pagination app-pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}{% if utilizador_id %}utilizador={{ utilizador_id|urlencode }}&amp;{% endif %}{% if acao_selecionada %}acao={{ acao_selecionada|urlencode }}&amp;{% endif %}{% if data_inicio %}data_inicio={{ data_inicio|urlencode }}&amp;{% endif %}{% if data_fim %}data_fim={{ data_fim|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}{% if utilizador_id %}utilizador={{ utilizador_id|urlencode }}&amp;{% endif %}{% if acao_selecionada %}acao={{ acao_selecionada|urlencode }}&amp;{% endif %}{% if data_inicio %}data_inicio={{ data_inicio|urlencode }}&amp;{% endif %}{% if data_fim %}data_fim={{ data_fim|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?{% if pesquisa %}pesquisa={{ pesquisa|urlencode }}&amp;{% endif %}{% if utilizador_id %}utilizador={{ utilizador_id|urlencode }}&amp;{% endif %}{% if acao_selecionada %}acao={{ acao_selecionada|urlencode }}&amp;{% endif %}{% if data_inicio %}data_inicio={{ data_inicio|urlencode }}&amp;{% endif %}{% if data_fim %}data_fim={{ data_fim|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Seguinte</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Seguinte</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

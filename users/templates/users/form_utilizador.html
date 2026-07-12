@@ -3,6 +3,28 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
+<style>
+    .room-checkbox-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.75rem;
+        background: #f8fafc;
+    }
+
+    .room-checkbox-list .form-check {
+        margin: 0;
+        min-height: auto;
+    }
+
+    .room-checkbox-list .form-check-label {
+        cursor: pointer;
+        color: #334155;
+        font-weight: 500;
+    }
+</style>
 <div class="page-header">
     <div>
         <h2>{{ page_title }}</h2>
@@ -50,6 +72,14 @@
                     {{ form.estado }}
                     {% for error in form.estado.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                 </div>
+                <div class="col-md-6" id="coordinator-room-field"{% if form.perfil.value != "Coordenador" %} style="display: none;"{% endif %}>
+                    <label for="{{ form.salas_atribuidas.id_for_label }}" class="form-label">{{ form.salas_atribuidas.label }}</label>
+                    <div class="room-checkbox-list">
+                        {{ form.salas_atribuidas }}
+                    </div>
+                    <div class="form-text">Pode selecionar uma ou várias salas para este coordenador.</div>
+                    {% for error in form.salas_atribuidas.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                </div>
                 <div class="col-md-6">
                     <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
                     {{ form.password }}
@@ -78,4 +108,28 @@
         </form>
     </div>
 </div>
+<script>
+    (function () {
+        const profileField = document.getElementById("{{ form.perfil.id_for_label }}");
+        const roomWrapper = document.getElementById("coordinator-room-field");
+        const roomField = document.querySelectorAll('input[name="{{ form.salas_atribuidas.html_name }}"]');
+
+        if (!profileField || !roomWrapper || !roomField.length) {
+            return;
+        }
+
+        function toggleCoordinatorRoomField() {
+            const isCoordinator = profileField.value === "Coordenador";
+            roomWrapper.style.display = isCoordinator ? "" : "none";
+            if (!isCoordinator) {
+                roomField.forEach(function (option) {
+                    option.checked = false;
+                });
+            }
+        }
+
+        profileField.addEventListener("change", toggleCoordinatorRoomField);
+        toggleCoordinatorRoomField();
+    })();
+</script>
 {% endblock %}

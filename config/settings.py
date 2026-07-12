@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'tecnico',
     'relatorios',
     'ai_agent',
+    'auditoria.apps.AuditoriaConfig',
 ]
 
 MIDDLEWARE = [

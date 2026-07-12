@@ -5,6 +5,7 @@ from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from auditoria.services import log_action
 from computadores.models import Computador
 from salas.models import Sala
 from users.access import (
@@ -153,6 +154,12 @@ def registar_anomalia(request):
                 form.cleaned_data.get("imagens"),
                 form.cleaned_data.get("videos"),
             )
+            log_action(
+                request=request,
+                action="CRIAR_ANOMALIA",
+                entity=anomalia,
+                description=f"Anomalia criada: {anomalia.titulo}.",
+            )
 
             mensagem = f"""
 Foi registada uma nova anomalia.
@@ -204,11 +211,21 @@ def atualizar_estado(request, pk):
     if request.method == "POST":
         novo_estado = request.POST.get("estado")
         if novo_estado in dict(Anomalia.ESTADO_CHOICES):
+            estado_anterior = anomalia.get_estado_display()
             anomalia.estado = novo_estado
             if novo_estado == "RESOLVIDO":
                 anomalia.marcar_resolvido()
             else:
                 anomalia.save()
+            log_action(
+                request=request,
+                action="ALTERAR_ESTADO_ANOMALIA",
+                entity=anomalia,
+                description=(
+                    f"Estado da anomalia '{anomalia.titulo}' alterado de "
+                    f"{estado_anterior} para {anomalia.get_estado_display()}."
+                ),
+            )
 
             mensagem = f"""
 O estado de uma anomalia foi atualizado.
@@ -249,9 +266,19 @@ def atualizar_prioridade(request, pk):
 
     form = AnomaliaPrioridadeForm(request.POST, instance=anomalia)
     if form.is_valid():
+        prioridade_anterior = anomalia.get_prioridade_display()
         anomalia = form.save(commit=False)
         anomalia.full_clean()
         anomalia.save(update_fields=["prioridade"])
+        log_action(
+            request=request,
+            action="ALTERAR_PRIORIDADE_ANOMALIA",
+            entity=anomalia,
+            description=(
+                f"Prioridade da anomalia '{anomalia.titulo}' alterada de "
+                f"{prioridade_anterior} para {anomalia.get_prioridade_display()}."
+            ),
+        )
         messages.success(request, "Prioridade atualizada com sucesso.")
     else:
         messages.error(request, "Não foi possível atualizar a prioridade.")
@@ -371,6 +398,12 @@ def eliminar_anomalia(request, pk):
     if request.method == "POST":
         anomalia.ativo = False
         anomalia.save(update_fields=["ativo"])
+        log_action(
+            request=request,
+            action="ELIMINAR_ANOMALIA",
+            entity=anomalia,
+            description=f"Anomalia removida da lista principal: {anomalia.titulo}.",
+        )
         messages.success(request, "Anomalia removida da lista principal com sucesso.")
         return redirect("anomalias:lista_anomalias")
 
@@ -390,6 +423,12 @@ def registar_anomalia_geral(request):
                 anomalia,
                 form.cleaned_data.get("imagens"),
                 form.cleaned_data.get("videos"),
+            )
+            log_action(
+                request=request,
+                action="CRIAR_ANOMALIA",
+                entity=anomalia,
+                description=f"Anomalia geral criada: {anomalia.titulo}.",
             )
 
             mensagem = f"""

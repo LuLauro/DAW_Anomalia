@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
 from anomalias.models import Anomalia
+from auditoria.services import log_action
 from users.access import filter_anomalias_for_user
 from .services import AIAgentService
 
@@ -79,6 +80,12 @@ def perguntar(request):
 
     service = AIAgentService()
     resposta = service.analyze(pergunta, list(anomalias))
+    log_action(
+        request=request,
+        action="UTILIZAR_ASSISTENTE_IA",
+        entity="Assistente IA",
+        description=f"Pergunta enviada ao assistente IA: {pergunta[:200]}",
+    )
     return JsonResponse(resposta, safe=True)
 
 
@@ -111,6 +118,12 @@ def chat(request):
         list(anomalias),
         conversation_history=conversation,
     )
+    log_action(
+        request=request,
+        action="UTILIZAR_ASSISTENTE_IA",
+        entity="Assistente IA",
+        description=f"Mensagem enviada ao assistente IA: {pergunta[:200]}",
+    )
     return JsonResponse(resposta)
 
 
@@ -125,6 +138,12 @@ def diagnostico_anomalia(request, pk):
 
     service = AIAgentService()
     resposta = service.diagnose_anomaly(anomalia, list(anomalias))
+    log_action(
+        request=request,
+        action="UTILIZAR_DIAGNOSTICO_IA",
+        entity=anomalia,
+        description=f"Diagnóstico IA gerado para a anomalia '{anomalia.titulo}'.",
+    )
 
     return JsonResponse(
         {
