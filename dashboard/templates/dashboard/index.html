@@ -107,22 +107,28 @@
         </div>
     </section>
 
-    <section class="card visual-unified-card">
-        <div class="card-header">
-            <h5 class="mb-0">An&aacute;lise Visual</h5>
-        </div>
-        <div class="card-body">
-            <div class="visual-unified-grid">
-                <div class="visual-placeholder-compact">
-                    <span class="visual-placeholder-note">Espa&ccedil;o reservado para Power BI</span>
-                </div>
-                <div class="chart-wrap analytics-chart-wrap compact">
-                    <div class="chart-canvas-wrap">
-                        <canvas id="graficoEstado"></canvas>
-                    </div>
+    <section class="dashboard-split-grid dashboard-split-grid-primary">
+        <article class="card chart-card dashboard-premium-card">
+            <div class="card-header">
+                <h5 class="mb-0">Anomalias por Prioridade</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-panel chart-panel-bars">
+                    <canvas id="graficoPrioridade"></canvas>
                 </div>
             </div>
-        </div>
+        </article>
+
+        <article class="card chart-card dashboard-premium-card dashboard-premium-card-donut">
+            <div class="card-header">
+                <h5 class="mb-0">Estado das Anomalias</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-panel chart-panel-donut">
+                    <canvas id="graficoEstado"></canvas>
+                </div>
+            </div>
+        </article>
     </section>
 
     <section class="card recent-table-card">
@@ -253,19 +259,84 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const ctxEstado = document.getElementById("graficoEstado").getContext("2d");
-  new Chart(ctxEstado, {
-    type: "pie",
+document.addEventListener("DOMContentLoaded", function () {
+  const dadosEstado = {
+    labels: {{ dados_estado_labels|safe }},
+    values: {{ dados_estado_valores|safe }},
+    colors: {{ dados_estado_cores|safe }}
+  };
+  const dadosPrioridade = {
+    labels: ["Crítica", "Alta", "Média", "Baixa"],
+    values: [
+      {{ total_criticas|default:0 }},
+      {{ total_altas|default:0 }},
+      {{ total_medias|default:0 }},
+      {{ total_baixas|default:0 }}
+    ]
+  };
+
+  Chart.defaults.color = "#475569";
+  Chart.defaults.font.family = "Segoe UI, system-ui, sans-serif";
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.boxWidth = 10;
+
+  new Chart(document.getElementById("graficoPrioridade"), {
+    type: "bar",
     data: {
-      labels: {{ dados_estado_labels|safe }},
+      labels: dadosPrioridade.labels,
       datasets: [{
-        data: {{ dados_estado_valores|safe }},
-        backgroundColor: {{ dados_estado_cores|safe }}
+        label: "Anomalias",
+        data: dadosPrioridade.values,
+        backgroundColor: ["#dc2626", "#f97316", "#f59e0b", "#16a34a"],
+        borderRadius: 12,
+        borderSkipped: false,
+        barThickness: 18,
+        maxBarThickness: 22
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          },
+          grid: {
+            color: "rgba(148, 163, 184, 0.18)"
+          }
+        },
+        y: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById("graficoEstado"), {
+    type: "doughnut",
+    data: {
+      labels: dadosEstado.labels,
+      datasets: [{
+        data: dadosEstado.values,
+        backgroundColor: dadosEstado.colors,
+        borderWidth: 0,
+        hoverOffset: 5
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
+      cutout: "62%",
       plugins: {
         legend: {
           position: "bottom"
@@ -273,5 +344,6 @@
       }
     }
   });
+});
 </script>
 {% endblock %}

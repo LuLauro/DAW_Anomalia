@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Histórico de Anomalias{% endblock %}
 
@@ -57,6 +58,18 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary ai-diagnosis-icon-btn"
+                            data-ai-diagnosis-url="{% url 'ai_agent:diagnostico_anomalia' anomalia.pk %}"
+                            data-ai-diagnosis-title="{{ anomalia.titulo }}"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Diagnóstico IA"
+                            aria-label="Diagnóstico IA"
+                        >
+                            <i class="fas fa-robot" aria-hidden="true"></i>
+                        </button>
                         <a href="{% url 'tecnico:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhe</a>
                     </td>
                 </tr>
@@ -69,4 +82,9 @@
         </table>
     </div>
 </div>
+{% include "partials/diagnostico_ia_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/anomaly_ai_diagnosis.js' %}"></script>
 {% endblock %}

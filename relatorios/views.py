@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+﻿from datetime import datetime, timedelta
 from io import BytesIO
 import base64
 
@@ -56,7 +56,7 @@ def _build_qr_kit_items(request, qr_type, sala_id=None):
                     "entity_type": "sala",
                     "title": f"Sala {sala.numero}",
                     "meta_lines": [f"Sala: {sala.numero}"],
-                    "description": "Escaneie este código para reportar uma anomalia nesta sala.",
+                    "description": "Escaneie este cÃ³digo para reportar uma anomalia nesta sala.",
                     "target_url": target_url,
                     "qr_code_data_uri": build_qr_code_data_uri(target_url),
                 }
@@ -77,7 +77,7 @@ def _build_qr_kit_items(request, qr_type, sala_id=None):
                         f"Sala: {computador.sala.numero}",
                         f"Computador: {computador.numero_identificacao}",
                     ],
-                    "description": "Escaneie este código para reportar uma anomalia neste computador.",
+                    "description": "Escaneie este cÃ³digo para reportar uma anomalia neste computador.",
                     "target_url": target_url,
                     "qr_code_data_uri": build_qr_code_data_uri(target_url),
                 }
@@ -130,9 +130,9 @@ def _anomalia_relatorio_filtro_base():
 
 def _priority_style(prioridade):
     return {
-        "CRITICA": {"bg": "#dc3545", "fg": "#ffffff", "label": "Crítica"},
+        "CRITICA": {"bg": "#dc3545", "fg": "#ffffff", "label": "CrÃ­tica"},
         "ALTA": {"bg": "#fd7e14", "fg": "#ffffff", "label": "Alta"},
-        "MEDIA": {"bg": "#ffc107", "fg": "#212529", "label": "Média"},
+        "MEDIA": {"bg": "#ffc107", "fg": "#212529", "label": "MÃ©dia"},
         "BAIXA": {"bg": "#198754", "fg": "#ffffff", "label": "Baixa"},
     }.get(prioridade, {"bg": "#6c757d", "fg": "#ffffff", "label": prioridade or "-"})
 
@@ -145,7 +145,7 @@ def _attach_priority_style(anomalias):
 
 
 def grafico_estado_base64(resolvidas, pendentes, em_resolucao):
-    labels = ["Resolvidas", "Pendentes", "Em resolução"]
+    labels = ["Resolvidas", "Pendentes", "Em resoluÃ§Ã£o"]
     valores = [resolvidas, pendentes, em_resolucao]
     cores = ["#2e7d32", "#f9a825", "#0288d1"]
 
@@ -179,7 +179,7 @@ def grafico_top_salas_base64(top_salas):
     fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=120)
     ax.bar(labels, valores, color="#546e7a")
     ax.set_title("Top salas", fontsize=11)
-    ax.set_ylabel("N.º de anomalias")
+    ax.set_ylabel("N.Âº de anomalias")
     ax.tick_params(axis="x", rotation=30)
 
     buffer = BytesIO()
@@ -199,7 +199,7 @@ def grafico_top_tipos_base64(top_tipos):
     fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=120)
     ax.bar(labels, valores, color="#8e24aa")
     ax.set_title("Top tipos", fontsize=11)
-    ax.set_ylabel("N.º de anomalias")
+    ax.set_ylabel("N.Âº de anomalias")
     ax.tick_params(axis="x", rotation=30)
 
     buffer = BytesIO()
@@ -212,7 +212,7 @@ def grafico_top_tipos_base64(top_tipos):
 @login_required
 def relatorio_form(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
+        messages.error(request, "Acesso restrito a Administrador, Coordenador ou TÃ©cnico.")
         return redirect("anomalias:lista_anomalias")
 
     salas = filter_salas_for_user(Sala.objects.all(), request.user).order_by("numero")
@@ -268,17 +268,7 @@ def qrcode_kit_pdf(request):
         "generated_at": timezone.now(),
     }
 
-    template = get_template("relatorios/qrcode_kit_pdf.html")
-    html = template.render(context)
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=kit_qr_codes.pdf"
-
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    if pisa_status.err:  # type: ignore
-        messages.error(request, "Não foi possível gerar o PDF do kit de QR Codes.")
-        return redirect("relatorios:qrcode_kit_form")
-
-    return response
+    return render(request, "relatorios/qrcode_kit_pdf.html", context)
 
 
 @login_required
@@ -286,7 +276,7 @@ def gerar_relatorio_pdf(request):
     if not _user_can_access(request.user):
         messages.error(
             request,
-            "Acesso restrito a Administrador, Coordenador ou Técnico.",
+            "Acesso restrito a Administrador, Coordenador ou TÃ©cnico.",
         )
         return redirect("anomalias:lista_anomalias")
 
@@ -301,7 +291,7 @@ def gerar_relatorio_pdf(request):
     )
 
     if not inicio or not fim:
-        messages.error(request, "Intervalo de datas inválido.")
+        messages.error(request, "Intervalo de datas invÃ¡lido.")
         return redirect("relatorios:form")
 
     from datetime import datetime, time
@@ -365,7 +355,7 @@ def gerar_relatorio_pdf(request):
     ).exists()
 
     context = {
-        "instituicao_nome": "Instituição de Ensino",
+        "instituicao_nome": "InstituiÃ§Ã£o de Ensino",
         "data_geracao": timezone.now(),
         "periodo_inicio": inicio,
         "periodo_fim": fim,
@@ -400,7 +390,7 @@ def gerar_relatorio_pdf(request):
     if pisa_status.err:
         messages.error(
             request,
-            "Não foi possível gerar o PDF."
+            "NÃ£o foi possÃ­vel gerar o PDF."
         )
         return redirect("relatorios:form")
 
@@ -409,7 +399,7 @@ def gerar_relatorio_pdf(request):
 @login_required
 def relatorio_semanal_pdf(request):
     if not _user_can_access(request.user):
-        messages.error(request, "Acesso restrito a Administrador, Coordenador ou Técnico.")
+        messages.error(request, "Acesso restrito a Administrador, Coordenador ou TÃ©cnico.")
         return redirect("anomalias:lista_anomalias")
 
     hoje = timezone.localdate()
@@ -457,7 +447,7 @@ def relatorio_semanal_pdf(request):
     is_tecnico = request.user.groups.filter(name="Tecnico").exists()
 
     context = {
-        "instituicao_nome": "Instituição de Ensino",
+        "instituicao_nome": "InstituiÃ§Ã£o de Ensino",
         "data_geracao": timezone.now(),
         "periodo_inicio": inicio,
         "periodo_fim": fim,
@@ -490,7 +480,8 @@ def relatorio_semanal_pdf(request):
 
     pisa_status = pisa.CreatePDF(html, dest=response)
     if pisa_status.err:  # type: ignore
-        messages.error(request, "Não foi possível gerar o PDF semanal.")
+        messages.error(request, "NÃ£o foi possÃ­vel gerar o PDF semanal.")
         return redirect("relatorios:form")
 
     return response
+

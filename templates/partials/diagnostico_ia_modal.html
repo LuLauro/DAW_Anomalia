@@ -1,0 +1,37 @@
+<div
+    class="modal fade"
+    id="diagnosticoIaModal"
+    tabindex="-1"
+    aria-labelledby="diagnosticoIaModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content ai-diagnosis-modal">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="diagnosticoIaModalLabel">
+                        <span class="me-2">✨</span>Diagnóstico IA
+                    </h5>
+                    <p class="ai-diagnosis-modal-subtitle mb-0" data-ai-diagnosis-subtitle>
+                        Análise rápida da anomalia.
+                    </p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-diagnosis-response" data-ai-diagnosis-response>
+                    <div class="d-flex align-items-center gap-3 text-muted">
+                        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+                        <span>A preparar diagnóstico...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" data-ai-diagnosis-continue disabled>
+                    Continuar no Assistente IA
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

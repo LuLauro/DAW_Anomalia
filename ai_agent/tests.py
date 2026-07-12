@@ -57,12 +57,12 @@ class AIAgentTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
 
-    def test_chat_endpoint_returns_placeholder_response(self):
+    def test_chat_endpoint_returns_service_response(self):
         self.client.login(username="tec", password="pass")
         url = reverse("ai_agent:chat")
 
-        with mock.patch("ai_agent.views.generate_assistant_chat_response") as mocked:
-            mocked.return_value = "Resposta placeholder"
+        with mock.patch("ai_agent.services.AIAgentService.analyze") as mocked:
+            mocked.return_value = {"response": "Resposta placeholder"}
             response = self.client.post(
                 url,
                 data='{"message": "Resumo desta semana"}',
@@ -71,6 +71,34 @@ class AIAgentTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["response"], "Resposta placeholder")
+
+    def test_chat_endpoint_passes_conversation_history(self):
+        self.client.login(username="tec", password="pass")
+        url = reverse("ai_agent:chat")
+
+        with mock.patch("ai_agent.services.AIAgentService.analyze") as mocked:
+            mocked.return_value = {"response": "Resposta"}
+            self.client.post(
+                url,
+                data=(
+                    '{"message": "E os outros?", "conversation": '
+                    '[{"role": "user", "content": "Existem equipamentos com muitas avarias?"}, '
+                    '{"role": "bot", "content": "O Computador 15 tem 4 anomalias."}]}'
+                ),
+                content_type="application/json",
+            )
+
+        mocked.assert_called_once()
+        self.assertEqual(
+            mocked.call_args.kwargs["conversation_history"],
+            [
+                {
+                    "role": "user",
+                    "content": "Existem equipamentos com muitas avarias?",
+                },
+                {"role": "bot", "content": "O Computador 15 tem 4 anomalias."},
+            ],
+        )
 
     def test_chat_endpoint_rejects_non_tecnico(self):
         self.client.login(username="prof", password="pass")
@@ -95,3 +123,46 @@ class AIAgentTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
+
+    def test_diagnostico_anomalia_returns_response(self):
+        self.client.login(username="tec", password="pass")
+        url = reverse("ai_agent:diagnostico_anomalia", args=[self.anomalia.pk])
+
+        with mock.patch("ai_agent.services.AIAgentService.diagnose_anomaly") as mocked:
+            mocked.return_value = "## Possíveis causas\n- Cabo solto"
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["response"],
+            "## Possíveis causas\n- Cabo solto",
+        )
+        self.assertIn("assistant_context_message", response.json())
+
+    def test_diagnostico_anomalia_uses_fallback_when_service_fails(self):
+        self.client.login(username="tec", password="pass")
+        url = reverse("ai_agent:diagnostico_anomalia", args=[self.anomalia.pk])
+
+        with mock.patch(
+            "ai_agent.services.AIAgentService._call_api",
+            side_effect=RuntimeError("API indisponível"),
+        ):
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Tempo estimado", response.json()["response"])
+
+    def test_diagnostico_anomalia_filters_professor_access(self):
+        other_professor = User.objects.create_user(username="prof2", password="pass")
+        other_professor.groups.add(self.group_professor)
+
+        self.client.login(username="prof", password="pass")
+        url = reverse("ai_agent:diagnostico_anomalia", args=[self.anomalia.pk])
+        with mock.patch("ai_agent.services.AIAgentService.diagnose_anomaly") as mocked:
+            mocked.return_value = "## Possíveis causas\n- Cabo solto"
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        self.client.login(username="prof2", password="pass")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)

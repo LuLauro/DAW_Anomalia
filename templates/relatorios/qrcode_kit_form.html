@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h2>QR Codes</h2>
-        <p>Gere um PDF A4 com QR Codes de salas, computadores ou ambos.</p>
+        <p>Abra uma página de impressão com QR Codes de salas, computadores ou ambos.</p>
     </div>
 </div>
 
@@ -15,9 +15,9 @@
         <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Kit de QR Codes</h5>
     </div>
     <div class="card-body">
-        <form method="get" action="{% url 'relatorios:qrcode_kit_pdf' %}" class="row g-3">
+        <form method="get" action="{% url 'relatorios:qrcode_kit_pdf' %}" class="row g-3" target="_blank" rel="noopener">
             <div class="col-md-6">
-                <label for="id_tipo" class="form-label">Gerar</label>
+                <label for="id_tipo" class="form-label">Imprimir</label>
                 <select id="id_tipo" name="tipo" class="form-select">
                     <option value="salas" {% if selected_type == "salas" %}selected{% endif %}>QR Codes de todas as Salas</option>
                     <option value="computadores" {% if selected_type == "computadores" %}selected{% endif %}>QR Codes de todos os Computadores</option>
@@ -39,7 +39,7 @@
 
             <div class="col-12 form-row-actions">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-file-pdf me-2"></i>Gerar PDF
+                    <i class="fas fa-print me-2"></i>🖨️ Imprimir QR Codes
                 </button>
                 <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">Voltar</a>
             </div>

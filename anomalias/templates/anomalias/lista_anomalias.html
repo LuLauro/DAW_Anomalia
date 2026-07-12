@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Lista de Anomalias{% endblock %}
 
@@ -87,6 +88,18 @@
                     <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
                     <td>
                         <div class="table-actions">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary ai-diagnosis-icon-btn"
+                                data-ai-diagnosis-url="{% url 'ai_agent:diagnostico_anomalia' anomalia.pk %}"
+                                data-ai-diagnosis-title="{{ anomalia.titulo }}"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Diagnóstico IA"
+                                aria-label="Diagnóstico IA"
+                            >
+                                <i class="fas fa-robot" aria-hidden="true"></i>
+                            </button>
                             <a href="{% url 'anomalias:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-info">Detalhes</a>
                             {% if can_delete_resolved and anomalia.estado == 'RESOLVIDO' %}
                             <button
@@ -167,6 +180,7 @@
         </div>
     </div>
 </div>
+{% include "partials/diagnostico_ia_modal.html" %}
 {% endblock %}
 
 {% block extra_js %}
@@ -184,4 +198,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+<script src="{% static 'admin/js/anomaly_ai_diagnosis.js' %}"></script>
 {% endblock %}

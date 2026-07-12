@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Dashboard T&eacute;cnico{% endblock %}
+{% block title %}Dashboard Técnico{% endblock %}
 
 {% block content %}
 <div class="admin-dashboard technician-dashboard">
     <section class="page-header admin-dashboard-header">
         <div>
-            <h1>Dashboard T&eacute;cnico</h1>
-            <p>Resumo de trabalho t&eacute;cnico com acesso r&aacute;pido &agrave;s ocorr&ecirc;ncias mais recentes.</p>
+            <h1>Dashboard Técnico</h1>
+            <p>Resumo de trabalho técnico com acesso rápido às ocorrências mais recentes.</p>
         </div>
         <div class="admin-dashboard-summary">
             <span class="summary-pill">
                 <i class="fas fa-screwdriver-wrench"></i>
-                Opera&ccedil;&atilde;o t&eacute;cnica
+                Operação técnica
             </span>
         </div>
     </section>
@@ -25,7 +26,7 @@
                     <div>
                         <p class="metric-label">Pendentes</p>
                         <h3 class="metric-value">{{ total_pendentes }}</h3>
-                        <p class="metric-caption">Aguardam interven&ccedil;&atilde;o</p>
+                        <p class="metric-caption">Aguardam intervenção</p>
                     </div>
                     <span class="metric-icon"><i class="fas fa-hourglass-half"></i></span>
                 </div>
@@ -35,9 +36,9 @@
                 <div class="metric-topbar"></div>
                 <div class="metric-top">
                     <div>
-                        <p class="metric-label">Em Resolu&ccedil;&atilde;o</p>
+                        <p class="metric-label">Em Resolução</p>
                         <h3 class="metric-value">{{ total_em_resolucao }}</h3>
-                        <p class="metric-caption">Ocorr&ecirc;ncias em tratamento</p>
+                        <p class="metric-caption">Em tratamento técnico</p>
                     </div>
                     <span class="metric-icon"><i class="fas fa-screwdriver-wrench"></i></span>
                 </div>
@@ -49,79 +50,26 @@
                     <div>
                         <p class="metric-label">Resolvidas</p>
                         <h3 class="metric-value">{{ total_resolvidas }}</h3>
-                        <p class="metric-caption">Anomalias conclu&iacute;das</p>
+                        <p class="metric-caption">Intervenções concluídas</p>
                     </div>
                     <span class="metric-icon"><i class="fas fa-circle-check"></i></span>
                 </div>
             </article>
         </div>
-
-        <div class="metric-grid admin-kpi-grid admin-kpi-grid-four admin-kpi-grid-priority">
-            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-red">
-                <div class="metric-topbar"></div>
-                <div class="metric-top">
-                    <div>
-                        <p class="metric-label">Cr&iacute;ticas</p>
-                        <h3 class="metric-value">{{ total_criticas }}</h3>
-                        <p class="metric-caption">Interven&ccedil;&atilde;o imediata</p>
-                    </div>
-                    <span class="metric-icon"><i class="fas fa-bolt"></i></span>
-                </div>
-            </article>
-
-            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-orange">
-                <div class="metric-topbar"></div>
-                <div class="metric-top">
-                    <div>
-                        <p class="metric-label">Altas</p>
-                        <h3 class="metric-value">{{ total_altas }}</h3>
-                        <p class="metric-caption">Prioridade elevada</p>
-                    </div>
-                    <span class="metric-icon"><i class="fas fa-fire"></i></span>
-                </div>
-            </article>
-
-            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-amber">
-                <div class="metric-topbar"></div>
-                <div class="metric-top">
-                    <div>
-                        <p class="metric-label">M&eacute;dias</p>
-                        <h3 class="metric-value">{{ total_medias }}</h3>
-                        <p class="metric-caption">Acompanhamento regular</p>
-                    </div>
-                    <span class="metric-icon"><i class="fas fa-equals"></i></span>
-                </div>
-            </article>
-
-            <article class="metric-card admin-kpi-card admin-kpi-card-compact tone-green">
-                <div class="metric-topbar"></div>
-                <div class="metric-top">
-                    <div>
-                        <p class="metric-label">Baixas</p>
-                        <h3 class="metric-value">{{ total_baixas }}</h3>
-                        <p class="metric-caption">Impacto reduzido</p>
-                    </div>
-                    <span class="metric-icon"><i class="fas fa-leaf"></i></span>
-                </div>
-            </article>
-        </div>
     </section>
 
-    <section class="card mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center gap-3 flex-wrap">
-            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Anomalias Recentes</h5>
-            <div class="page-actions">
-                <a href="{% url 'tecnico:lista_anomalias' %}" class="btn btn-secondary">Ver todas</a>
-                <a href="{% url 'tecnico:historico_anomalias' %}" class="btn btn-outline-secondary">Hist&oacute;rico</a>
-            </div>
+    <section class="card recent-table-card">
+        <div class="card-header">
+            <h5 class="mb-0">Anomalias Recentes</h5>
+            <a href="{% url 'tecnico:lista_anomalias' %}" class="btn btn-secondary">Ver todas</a>
         </div>
         <div class="card-body p-0">
-            <div class="table-card">
+            <div class="table-card admin-table-card">
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>T&iacute;tulo</th>
+                                <th>Título</th>
                                 <th>Estado</th>
                                 <th>Prioridade</th>
                                 <th>Sala</th>
@@ -154,6 +102,18 @@
                                 </td>
                                 <td>{{ anomalia.data_registo|date:"d/m/Y H:i" }}</td>
                                 <td class="text-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary ai-diagnosis-icon-btn"
+                                        data-ai-diagnosis-url="{% url 'ai_agent:diagnostico_anomalia' anomalia.pk %}"
+                                        data-ai-diagnosis-title="{{ anomalia.titulo }}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Diagnóstico IA"
+                                        aria-label="Diagnóstico IA"
+                                    >
+                                        <i class="fas fa-robot" aria-hidden="true"></i>
+                                    </button>
                                     <a href="{% url 'tecnico:detalhe_anomalia' anomalia.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
                                 </td>
                             </tr>
@@ -169,4 +129,9 @@
         </div>
     </section>
 </div>
+{% include "partials/diagnostico_ia_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/anomaly_ai_diagnosis.js' %}"></script>
 {% endblock %}

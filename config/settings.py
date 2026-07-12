@@ -105,6 +105,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+GEMINI_MODEL = os.getenv(
+    "GEMINI_MODEL",
+    "models/gemini-2.5-flash"
+)
+
 # Internationalization
 LANGUAGE_CODE = 'pt-pt'
 TIME_ZONE = 'Europe/Lisbon'

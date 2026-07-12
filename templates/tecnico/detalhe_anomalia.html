@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Detalhe da Anomalia{% endblock %}
 
@@ -29,6 +30,49 @@
                 <p class="mb-2"><strong>Data de resolução:</strong> {{ anomalia.data_resolvida|date:"d/m/Y H:i" }}</p>
                 {% endif %}
                 <p class="mb-0"><strong>Descrição:</strong><br>{{ anomalia.descricao }}</p>
+            </div>
+        </div>
+
+        <div class="card ai-assistance-card">
+            <div class="card-header">
+                <div>
+                    <h5 class="mb-0">🤖 Assistência IA</h5>
+                    <p class="ai-assistance-subtitle mb-0">Diagnóstico rápido integrado na página da anomalia.</p>
+                </div>
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary ai-assistance-trigger"
+                    data-ai-diagnosis-url="{% url 'ai_agent:diagnostico_anomalia' anomalia.pk %}"
+                    data-ai-diagnosis-title="{{ anomalia.titulo }}"
+                    data-ai-diagnosis-target="inline"
+                    data-ai-diagnosis-container="ai-diagnosis-inline-response"
+                    data-ai-diagnosis-continue="ai-diagnosis-inline-continue"
+                >
+                    <i class="fas fa-sparkles me-2" aria-hidden="true"></i>Gerar Diagnóstico
+                </button>
+            </div>
+            <div class="card-body">
+                <div
+                    id="ai-diagnosis-inline-response"
+                    class="ai-diagnosis-inline"
+                    data-ai-diagnosis-inline
+                >
+                    <div class="ai-diagnosis-inline-empty">
+                        <i class="fas fa-robot"></i>
+                        <p class="mb-0">Gere um diagnóstico rápido para obter tempo estimado, possíveis causas e materiais necessários.</p>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex justify-content-end">
+                    <button
+                        type="button"
+                        id="ai-diagnosis-inline-continue"
+                        class="btn btn-primary"
+                        data-ai-diagnosis-continue
+                        disabled
+                    >
+                        Continuar no Assistente IA
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -143,4 +187,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/anomaly_ai_diagnosis.js' %}"></script>
 {% endblock %}
