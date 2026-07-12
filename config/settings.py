@@ -2,16 +2,20 @@ import os
 from pathlib import Path
 from decouple import config
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here'
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1"
+).split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -35,6 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -63,32 +68,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
-DATABASES = {
+import dj_database_url
 
-    "default": {
-
-        "ENGINE": "django.db.backends.mysql",
-
-        "NAME": "pap_anomalias",
-
-        "USER": "root",
-
-        "PASSWORD": "A12345-a",
-
-        "HOST": "127.0.0.1",
-
-        "PORT": "3306",
-
-        "OPTIONS": {
-
-            "charset": "utf8mb4",
-
-        },
-
+if config("DATABASE_URL", default=None):
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=config("DATABASE_URL")
+        )
     }
-
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": "pap_anomalias",
+            "USER": "root",
+            "PASSWORD": "A12345-a",
+            "HOST": "127.0.0.1",
+            "PORT": "3306",
+            "OPTIONS": {
+                "charset": "utf8mb4",
+            },
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -170,3 +171,4 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 ano
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
